@@ -48,11 +48,11 @@ python cert_stash.py -f/ --file domain.lst
 
 Usage 3: To output current results to an excel sheet
 
-python cert_stash.py -e/ --export output.xlsx
+python cert_stash.py -e/ --export <op_filename>
 
 Usage 4: To output entire backend database with all historic search results to an excel sheet (can be used without any other argument)
 
-python cert_stash.py -eA/ --export_all output.xlsx
+python cert_stash.py -eA/ --export_all <op_filename>
 
 
 ## Built With
