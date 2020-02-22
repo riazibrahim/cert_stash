@@ -9,4 +9,4 @@ class Config:
     CERTSH_API_URL = os.environ.get('CERTSH_API_URL') or 'https://crt.sh/?q={}&output=json'
     FILE_LOGGING_LEVEL = logging.DEBUG
     CONSOLE_LOGGING_LEVEL = logging.INFO
-    LOG_FILENAME = 'collision.log'
+    LOG_FILENAME = 'cert_stash.log'
