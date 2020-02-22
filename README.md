@@ -66,7 +66,7 @@ python cert_stash.py -eA/ --export_all output.xlsx
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE.md](https://github.com/riazibrahim/cert_stash/blob/master/LICENSE.md) file for details
+This project is licensed under the MIT License - see the [LICENSE.md](LICENSE) file for details
 
 ## Acknowledgments
 
