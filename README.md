@@ -1,6 +1,6 @@
 # Cert Stash
 
-A tool for downloading certs data from cert.sh, parse it based on domains and store into a database or export as excel.
+A tool for downloading certificate log data from cert.sh, parse it based on domains and store into a database or export as excel.
 
 Feel free to hit me up with suggestions.
 
