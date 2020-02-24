@@ -30,8 +30,9 @@ def get_cert(domain, export_outfile):
         logger.info('Obtained the certificates list from cert.sh for {} domain'.format(domain))
         certs = json.loads(response.content)  # returns a dictionary
         logger.debug('Creating dataframe in the event export option is given')
+        # Creating dataframe in the event export option is given
         dataframe = pd.DataFrame(
-            columns=['issuer_ca_id', 'issuer_name', 'name_values', 'crtsh_id', 'entry_timestamp', 'not_before',
+            columns=['issuer_ca_id', 'issuer_name', 'name_value', 'crtsh_id', 'entry_timestamp', 'not_before',
                      'not_after'])
         logger.debug('Connecting to database')
         DBSession = sessionmaker(bind=engine)
