@@ -54,6 +54,11 @@ python cert_stash.py -e/ --export <op_filename>
 Usage 4: To output entire local sqlite database (i.e. results of all previous and/ or current searches) with all historic search results to an excel sheet (can be used without any other argument)
 
 python cert_stash.py -eA/ --export_all <op_filename>
+
+Usage 5: Process database entries into domains which are external, internal and others
+
+python cert_stash.py --process filter -if INT_TLD_LOC.lst -ef EXT_TLD_LOC.lst 
+
 ```
 
 ## Built With

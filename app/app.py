@@ -1,6 +1,9 @@
 from app import args, logger, engine, parser
-from app.utilities import export_db_to_excel
+from app.utilities import export_db_to_excel, create_dataframe_from_sql
 from app.get_certs import get_cert
+from app.filter import filter_domains
+import pandas as pd
+from config import Config
 import os
 import sys
 
@@ -10,41 +13,53 @@ input_file = args.file
 input_domain = args.domain
 export_all_outfile = args.export_all_outfile
 export_outfile = args.export_outfile
+process = args.process
+internal_tld_file = args.itld
+external_tld_file = args.etld
 
-if os.path.exists('outputs/{}.xlsx'.format(export_outfile)):
-    logger.info('The output file {}.xlsx already exists'.format(export_outfile))
-    print('Message: Please provide a different output file name')
-    sys.exit('Finished!')
+# if the task is to process domains stored in the sqlite database
+if process is not None:
+    logger.info('Created dataframe from the database')
+    dataframe = create_dataframe_from_sql(engine=engine, tablename='certsmaster')
+    logger.info('Passing dataframe to filter_domains')
+    filter_domains(internal_tld_file=internal_tld_file, external_tld_file=external_tld_file, dataframe=dataframe)
 
-if os.path.exists('outputs/{}.xlsx'.format(export_all_outfile)):
-    logger.info('The output file {}.xlsx already exists'.format(export_all_outfile))
-    print('Message: Please provide a different output file name')
-    sys.exit('Finished!')
+# if the task is to update sqlite database with client queries or export the contents of database
+else:
+    if os.path.exists('outputs/{}.xlsx'.format(export_outfile)):
+        logger.info('The output file {}.xlsx already exists'.format(export_outfile))
+        print('Message: Please provide a different output file name')
+        sys.exit('Finished!')
 
-if input_file is not None:
-    logger.debug('Input file detected')
-    with open(input_file, 'r') as file:
-        logger.debug('Opened input file {}'.format(input_file))
-        i = 1
-        for item in file.readlines():
-            domain = item.rstrip()
-            logger.info('Processing client number {} : {}'.format(i, domain))
-            get_cert(domain=domain, export_outfile=export_outfile)
-            i += 1
-elif input_domain is not None:
-    logger.debug('Input domain detected')
-    domain = input_domain.rstrip()
-    logger.info('Processing {}'.format(domain))
-    get_cert(domain=domain, export_outfile=export_outfile)
+    if os.path.exists('outputs/{}.xlsx'.format(export_all_outfile)):
+        logger.info('The output file {}.xlsx already exists'.format(export_all_outfile))
+        print('Message: Please provide a different output file name')
+        sys.exit('Finished!')
 
-if export_all_outfile is not None:
-    logger.debug('Export all option detected. Proceeding to export entire database into excel')
-    export_db_to_excel(engine=engine, tablename='certsmaster', outfile=export_all_outfile)
+    if input_file is not None:
+        logger.debug('Input file detected')
+        with open(input_file, 'r') as file:
+            logger.debug('Opened input file {}'.format(input_file))
+            i = 1
+            for item in file.readlines():
+                domain = item.rstrip()
+                logger.info('Processing client number {} : {}'.format(i, domain))
+                get_cert(domain=domain, export_outfile=export_outfile)
+                i += 1
+    elif input_domain is not None:
+        logger.debug('Input domain detected')
+        domain = input_domain.rstrip()
+        logger.info('Processing {}'.format(domain))
+        get_cert(domain=domain, export_outfile=export_outfile)
 
-# Print help if all arguments are none
-if input_file is None and export_all_outfile is None and input_domain is None:
-    logger.debug('No arguments given. Printing default help')
-    parser.print_help()  # Prints help if not argument is given to arg parse
+    if export_all_outfile is not None:
+        logger.debug('Export all option detected. Proceeding to export entire database into excel')
+        export_db_to_excel(engine=engine, tablename='certsmaster', outfile=export_all_outfile)
+
+    # Print help if all arguments are none
+    if input_file is None and export_all_outfile is None and input_domain is None:
+        logger.info('No arguments given. Printing default help')
+        parser.print_help()  # Prints help if not argument is given to arg parse
 
 logger.debug('Collision has finished processing.')
 logger.info('Done!')

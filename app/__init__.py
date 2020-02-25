@@ -12,6 +12,10 @@ parser.add_argument('-f', '--file', dest='file', type=str, help='Give input file
 parser.add_argument('-d', '--domain', dest='domain', type=str, help='Give input domain name', required=False)
 parser.add_argument('-eA', '--export_all', dest='export_all_outfile', type=str, help='Export entire database to Excel with given filename', required=False)
 parser.add_argument('-e', '--export', dest='export_outfile', type=str, help='Export current query response to Excel with given filename', required=False)
+parser.add_argument('-p', '--process', dest='process', type=str, choices=['filter'], help='Process the domains in sqlite database to find potential internal domains', required=False)
+parser.add_argument('-if', '--internalTLDFile', dest='itld', type=str, help='To use with --process. Give internal tlds in file', required=False)
+parser.add_argument('-ef', '--externalTLDFile', dest='etld', type=str, help='To use with --process. Give external tlds in file', required=False)
+
 args = parser.parse_args()
 
 # Define SQL database
@@ -29,11 +33,15 @@ Base.metadata.create_all(engine)
 if not os.path.exists('logs'):
     os.mkdir('logs')
 
+if not os.path.exists('outputs'):
+    os.mkdir('outputs')
+
+
 # create logger with 'spam_application'
 logger = logging.getLogger('collision')
 logger.setLevel(logging.DEBUG)
 # create file handler which logs even debug messages
-file_handler = logging.FileHandler('logs/collision.log')
+file_handler = logging.FileHandler('logs/{}'.format(Config.LOG_FILENAME))
 file_handler.setLevel(Config.FILE_LOGGING_LEVEL)
 # create console handler with a higher log level
 console_handler = logging.StreamHandler()
