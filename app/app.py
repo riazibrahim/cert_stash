@@ -30,8 +30,8 @@ if process is not None:
     logger.info('Proceeding to resolve IP address/ CNAME for external domain\n')
     # Resolve the IP address and CNAME for each external domain filtered INPUT: External TLD dataframe
     ns_dataframe = resolve_domains(external_tld_df)
-    logger.info('Exporting the DNS results to an excel {}\n'.format('01_NS_Results'))
-    export_to_excel(ns_dataframe, '01_NS_Results')
+    logger.info('Exporting the DNS results to an excel {} - {}\n'.format(filename_prepend, 'NS_Results'))
+    export_to_excel(ns_dataframe, '{} - NS_Results'.format(filename_prepend))
 
 # if the task is to update sqlite database with client queries or export the contents of database
 else:

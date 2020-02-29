@@ -50,12 +50,6 @@ def resolve_domains(dataframe):
     logger.info('Extracting unique domains/ urls into a list\n')
     uniq_domain_list = dataframe['name_value'].unique()
     logger.info('Identified {} unique domains/ urls for resolving...\n'.format(len(uniq_domain_list)))
-    # # Debug code for writing unique list to file
-    # with open('outputs/unique_list.txt', 'w') as filehandle:
-    #     for item in uniq_domain_list:
-    #         filehandle.write('\n{}'.format(item))
-    # sys.exit('DEBUG: Exit!!')
-
     logger.debug('Iterating through the unique domain list')
     for item in uniq_domain_list:
         ns_a_result = 'NULL'
@@ -77,10 +71,10 @@ def resolve_domains(dataframe):
             for cname in ns_cname_result:
                 cname_list.append(cname.to_text())
         except:
-            logger.warning('Error in resolving A record for {} ... moving on'.format(domain))
+            logger.warning('Error in resolving CNAME record for {} ... moving on'.format(domain))
         logger.debug('Appending row to ns dataframe')
         ns_dataframe = ns_dataframe.append({'name_value': domain,
                                             'IP address': ip_list,
-                                            'ns_cname_result': cname_list}, ignore_index=True)
+                                            'CNAME': cname_list}, ignore_index=True)
         logger.debug('Appended row to ns dataframe {}'.format(ns_dataframe['name_value']))
     return ns_dataframe

@@ -1,8 +1,9 @@
 from app import logger, parser
+from datetime import datetime
 import pandas as pd
 import sys
 
-
+filename_prepend = datetime.now().strftime("%Y%m%d-%H%M%S")
 # Takes a dataframe containing cert.sh data, exernal domains list and internal domains list as input. Outputs domains
 # into exernal, internal and excluded. Returns external domains in a dataframe
 def filter_domains(internal_tld_file, external_tld_file, dataframe):
@@ -35,21 +36,23 @@ def filter_domains(internal_tld_file, external_tld_file, dataframe):
                 external_tld_df = external_tld_df.append(df)
         logger.debug('The included df is :')
         logger.debug(external_tld_df)
-        logger.info('Generating external domains report\n')
-        external_tld_df.to_excel('outputs/{}.xlsx'.format('016_External_Domains_Entries'))
+        filename_external_domains = '{} - {}.xlsx'.format(filename_prepend, 'External_Domains_Entries')
+        logger.info('Generating external domains report "{}" in outputs folder\n'.format(filename_external_domains))
+        external_tld_df.to_excel('outputs/{}.xlsx'.format(filename_external_domains))
 
         # Finding all the non selected ones by comparing selected dataframe with original dataframe and dumping to an
         # excel
         excluded_df = pd.concat([dataframe, external_tld_df]).drop_duplicates(keep=False)
         logger.debug('The excluded df is :')
         logger.debug(excluded_df['name_value'])
-        logger.info('Generating removed entries report\n')
-        excluded_df.to_excel('outputs/{}.xlsx'.format('016_Removed_Entries'))
+        filename_removed_items = '{} - {}'.format(filename_prepend, 'Removed_Entries')
+        logger.info('Generating removed entries report "{}" in outputs folder\n'.format(filename_removed_items))
+        excluded_df.to_excel('outputs/{}.xlsx'.format(filename_removed_items))
 
         # From the excluded_df (which contains both valid internal domains as well as non domain text,
         # extract internal domains
         with open(internal_tld_file, 'r') as file:
-            logger.debug('Opened external TLD file {}\n'.format(external_tld_file))
+            logger.debug('Opened internal TLD file {}\n'.format(internal_tld_file))
             for item in file.readlines():
                 itld = item.rstrip().lower()
                 logger.debug('Printing selected dataframe .. {}\n'.format(itld))
@@ -59,6 +62,7 @@ def filter_domains(internal_tld_file, external_tld_file, dataframe):
 
         logger.debug('The internal domains df is :')
         logger.debug(internal_tld_df['name_value'])
-        logger.info('Generating internal domains report\n')
-        internal_tld_df.to_excel('outputs/{}.xlsx'.format('016_Internal_Domains_Entries'))
+        filename_internal_domains = '{} - {}.xlsx'.format(filename_prepend, 'Internal_Domains_Entries')
+        logger.info('Generating internal domains report "{}" in outputs folder\n'.format(filename_internal_domains))
+        internal_tld_df.to_excel('outputs/{}.xlsx'.format(filename_internal_domains))
     return external_tld_df
