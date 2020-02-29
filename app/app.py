@@ -2,17 +2,20 @@ from app import args, logger, engine, parser
 from app.utilities import export_db_to_excel, create_dataframe_from_sql, resolve_domains, export_to_excel
 from app.get_certs import get_cert
 from app.filter import filter_domains
-import pandas as pd
-from config import Config
-import os
-import sys
+from datetime import datetime
+
+filename_prepend = datetime.now().strftime("%Y%m%d-%H%M%S")
 
 # Gather all arguments
 logger.debug('Obtaining all arguments')
 input_file = args.file
 input_domain = args.domain
 export_all_outfile = args.export_all_outfile
+if export_all_outfile is not False:
+    export_all_outfile = '{} - Export Master DB'.format(filename_prepend)
 export_outfile = args.export_outfile
+if export_outfile is not False:
+    export_outfile = '{} - Export Current Query'.format(filename_prepend)
 process = args.process
 internal_tld_file = args.itld
 external_tld_file = args.etld
@@ -32,16 +35,6 @@ if process is not None:
 
 # if the task is to update sqlite database with client queries or export the contents of database
 else:
-    if os.path.exists('outputs/{}.xlsx'.format(export_outfile)):
-        logger.info('The output file {}.xlsx already exists'.format(export_outfile))
-        print('Message: Please provide a different output file name')
-        sys.exit('Finished!')
-
-    if os.path.exists('outputs/{}.xlsx'.format(export_all_outfile)):
-        logger.info('The output file {}.xlsx already exists'.format(export_all_outfile))
-        print('Message: Please provide a different output file name')
-        sys.exit('Finished!')
-
     if input_file is not None:
         logger.debug('Input file detected')
         with open(input_file, 'r') as file:
@@ -58,12 +51,12 @@ else:
         logger.info('Processing {}'.format(domain))
         get_cert(domain=domain, export_outfile=export_outfile)
 
-    if export_all_outfile is not None:
+    if export_all_outfile is not False:
         logger.debug('Export all option detected. Proceeding to export entire database into excel')
         export_db_to_excel(engine=engine, tablename='certsmaster', outfile=export_all_outfile)
 
     # Print help if all arguments are none
-    if input_file is None and export_all_outfile is None and input_domain is None:
+    if input_file is None and export_all_outfile is False and input_domain is None:
         logger.info('No arguments given. Printing default help')
         parser.print_help()  # Prints help if not argument is given to arg parse
 

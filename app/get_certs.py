@@ -51,7 +51,7 @@ def get_cert(domain, export_outfile):
                                          name_value=name_value.rstrip().lower(), crtsh_id=crtsh_id,
                                          entry_timestamp=entry_timestamp.rstrip(), not_before=not_before.rstrip(),
                                          not_after=not_after.rstrip())
-                if export_outfile is not None:  # if -e or --export option is given
+                if export_outfile is not False:  # if -e or --export option is given
                     logger.debug('Detected excel output. Appending dataframe as --export or -e given')
                     dataframe = dataframe.append({'issuer_ca_id': issuer_ca_id, 'issuer_name': issuer_name,
                                                   'name_value': name_value.lower(), 'crtsh_id': crtsh_id,
