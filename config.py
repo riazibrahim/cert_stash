@@ -11,6 +11,5 @@ class Config:
     CONSOLE_LOGGING_LEVEL = logging.INFO
     LOG_FILENAME = 'cert_stash.log'
 
-    # # Internal and external TLDs domain list for filtering purposes
-    # EXT_TLD_LOC = os.environ.get('EXT_TLD_LOC')
-    # INT_TLD_LOC = os.environ.get('INT_TLD_LOC')
+    # name servers
+    NAME_SERVERS = os.environ.get('NAME_SERVERS') or ['8.8.8.8', '1.1.1.1']

@@ -1,5 +1,5 @@
 from app import args, logger, engine, parser
-from app.utilities import export_db_to_excel, create_dataframe_from_sql
+from app.utilities import export_db_to_excel, create_dataframe_from_sql, resolve_domains, export_to_excel
 from app.get_certs import get_cert
 from app.filter import filter_domains
 import pandas as pd
@@ -19,10 +19,16 @@ external_tld_file = args.etld
 
 # if the task is to process domains stored in the sqlite database
 if process is not None:
-    logger.info('Created dataframe from the database')
+    logger.info('\nCreated dataframe from the database')
     dataframe = create_dataframe_from_sql(engine=engine, tablename='certsmaster')
-    logger.info('Passing dataframe to filter_domains')
-    filter_domains(internal_tld_file=internal_tld_file, external_tld_file=external_tld_file, dataframe=dataframe)
+    # once dataframe is created from Sqlite database, send it as input to filter_domain to do filtering and get only external TLDs
+    logger.info('\nPassing dataframe to filter_domains')
+    external_tld_df = filter_domains(internal_tld_file=internal_tld_file, external_tld_file=external_tld_file, dataframe=dataframe)
+    logger.info('\nProceeding to resolve IP address/ CNAME for external domain')
+    # Resolve the IP address and CNAME for each external domain filtered INPUT: External TLD dataframe
+    ns_dataframe = resolve_domains(external_tld_df)
+    logger.info('\nExporting the resolution results to an excel {}'.format('01_NS_Results'))
+    export_to_excel(ns_dataframe, '01_NS_Results')
 
 # if the task is to update sqlite database with client queries or export the contents of database
 else:
