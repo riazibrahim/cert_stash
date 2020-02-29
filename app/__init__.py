@@ -4,17 +4,24 @@ from sqlalchemy import create_engine
 from config import Config
 import logging
 from logging.handlers import RotatingFileHandler
+import signal
 import os
+import sys
 
 # Defining arguments and creating the args object
 parser = argparse.ArgumentParser(allow_abbrev=False, description='A tool for passive threat intel based on DNS and SSL')
 parser.add_argument('-f', '--file', dest='file', type=str, help='Give input filename', required=False)
 parser.add_argument('-d', '--domain', dest='domain', type=str, help='Give input domain name', required=False)
-parser.add_argument('-eA', '--export_all', dest='export_all_outfile', action='store_true', help='Export entire database to Excel', required=False)
-parser.add_argument('-e', '--export', dest='export_outfile', action='store_true', help='Export current query response to Excel', required=False)
-parser.add_argument('-p', '--process', dest='process', type=str, choices=['filter'], help='Process the domains in sqlite database to find potential internal domains', required=False)
-parser.add_argument('-if', '--internalTLDFile', dest='itld', type=str, help='To use with --process. Give internal tlds in file', required=False)
-parser.add_argument('-ef', '--externalTLDFile', dest='etld', type=str, help='To use with --process. Give external tlds in file', required=False)
+parser.add_argument('-eA', '--export_all', dest='export_all_outfile', action='store_true',
+                    help='Export entire database to Excel', required=False)
+parser.add_argument('-e', '--export', dest='export_outfile', action='store_true',
+                    help='Export current query response to Excel', required=False)
+parser.add_argument('-p', '--process', dest='process', type=str, choices=['filter'],
+                    help='Process the domains in sqlite database to find potential internal domains', required=False)
+parser.add_argument('-if', '--internalTLDFile', dest='itld', type=str,
+                    help='To use with --process. Give internal tlds in file', required=False)
+parser.add_argument('-ef', '--externalTLDFile', dest='etld', type=str,
+                    help='To use with --process. Give external tlds in file', required=False)
 
 args = parser.parse_args()
 
@@ -27,7 +34,6 @@ engine = create_engine(dbi_uri, echo=False)
 # create all tables
 Base.metadata.create_all(engine)
 
-
 # Define logging : file and console
 
 if not os.path.exists('logs'):
@@ -35,7 +41,6 @@ if not os.path.exists('logs'):
 
 if not os.path.exists('outputs'):
     os.mkdir('outputs')
-
 
 # create logger with 'spam_application'
 logger = logging.getLogger('collision')
@@ -58,5 +63,13 @@ logger.addHandler(console_handler)
 
 logger.debug('Collision app has started')
 
+
+# Signal handler To exit on Ctrl+C
+def signal_handler(sig, frame):
+    print('\n\nYou pressed Ctrl+C! .. exiting..')
+    sys.exit('Bye!')
+
+
+signal.signal(signal.SIGINT, signal_handler)
 
 from app import app, models
