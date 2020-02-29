@@ -13,9 +13,9 @@ def export_db_to_excel(engine, tablename, outfile):
     logger.debug('Read to dataframe from database into pandas')
     if not os.path.exists('outputs'):
         os.mkdir('outputs')
-    logger.info('Generating output in excel format')
+    logger.info('Generating output in excel format\n')
     db_dataframe.to_excel('outputs/{}.xlsx'.format(outfile))
-    logger.info('Generated {}.xlsx in outputs folder'.format(outfile))
+    logger.info('Generated {}.xlsx in outputs folder\n'.format(outfile))
 
 
 def create_dataframe_from_sql(engine, tablename):
@@ -31,7 +31,7 @@ def export_to_excel(dataframe, outfile):
         if not os.path.exists('outputs'):
             os.mkdir('outputs')
         dataframe.to_excel('outputs/{}.xlsx'.format(outfile))
-        logger.info('Generated {}.xlsx in outputs folder'.format(outfile))
+        logger.info('Generated {}.xlsx in outputs folder\n'.format(outfile))
 
 
 # Resolved the domains in the dataframe and returns the results in another dataframe
@@ -47,8 +47,9 @@ def resolve_domains(dataframe):
     ns_dataframe = pd.DataFrame(
         columns=['name_value', 'IP address', 'CNAME'])
     # initiating other variables to hold answers
-    logger.info('Extracting unique items from the data frame into a list')
+    logger.info('Extracting unique domains/ urls into a list\n')
     uniq_domain_list = dataframe['name_value'].unique()
+    logger.info('Identified {} unique domains/ urls for resolving...\n'.format(len(uniq_domain_list)))
     # # Debug code for writing unique list to file
     # with open('outputs/unique_list.txt', 'w') as filehandle:
     #     for item in uniq_domain_list:

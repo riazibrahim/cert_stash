@@ -22,15 +22,15 @@ external_tld_file = args.etld
 
 # if the task is to process domains stored in the sqlite database
 if process is not None:
-    logger.info('\nCreated dataframe from the database')
+    logger.debug('Created dataframe from the database\n')
     dataframe = create_dataframe_from_sql(engine=engine, tablename='certsmaster')
     # once dataframe is created from Sqlite database, send it as input to filter_domain to do filtering and get only external TLDs
-    logger.info('\nPassing dataframe to filter_domains')
+    logger.debug('Passing dataframe to filter_domains\n')
     external_tld_df = filter_domains(internal_tld_file=internal_tld_file, external_tld_file=external_tld_file, dataframe=dataframe)
-    logger.info('\nProceeding to resolve IP address/ CNAME for external domain')
+    logger.info('Proceeding to resolve IP address/ CNAME for external domain\n')
     # Resolve the IP address and CNAME for each external domain filtered INPUT: External TLD dataframe
     ns_dataframe = resolve_domains(external_tld_df)
-    logger.info('\nExporting the resolution results to an excel {}'.format('01_NS_Results'))
+    logger.info('Exporting the DNS results to an excel {}\n'.format('01_NS_Results'))
     export_to_excel(ns_dataframe, '01_NS_Results')
 
 # if the task is to update sqlite database with client queries or export the contents of database
@@ -42,13 +42,13 @@ else:
             i = 1
             for item in file.readlines():
                 domain = item.rstrip()
-                logger.info('Processing client number {} : {}'.format(i, domain))
+                logger.info('Processing client number {} : {}\n'.format(i, domain))
                 get_cert(domain=domain, export_outfile=export_outfile)
                 i += 1
     elif input_domain is not None:
         logger.debug('Input domain detected')
         domain = input_domain.rstrip()
-        logger.info('Processing {}'.format(domain))
+        logger.info('Processing {}\n'.format(domain))
         get_cert(domain=domain, export_outfile=export_outfile)
 
     if export_all_outfile is not False:
@@ -57,8 +57,8 @@ else:
 
     # Print help if all arguments are none
     if input_file is None and export_all_outfile is False and input_domain is None:
-        logger.info('No arguments given. Printing default help')
+        logger.info('No arguments given. Printing default help\n')
         parser.print_help()  # Prints help if not argument is given to arg parse
 
 logger.debug('Collision has finished processing.')
-logger.info('Done!')
+logger.info('Done!\n')
