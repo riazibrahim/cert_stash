@@ -59,7 +59,11 @@ or
 
 python cert_stash.py -d <domain_name> -eA/ --export_all
 
-Usage 5: Process database entries into domains which are external, internal and others
+Usage 5: Export only results pertaining to specific previous searches (all queries gets saved as search tag in database)
+
+python cert_stash.py -eA --tag <search tag>
+
+Usage 6: Process database entries into domains which are external, internal and others
 
 python cert_stash.py --process filter -if INT_TLD_LOC.lst -ef EXT_TLD_LOC.lst 
 
