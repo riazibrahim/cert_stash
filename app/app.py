@@ -33,7 +33,7 @@ if process is not None:
     logger.info('Exporting the DNS results to an excel {} - {}\n'.format(filename_prepend, 'NS_Results'))
     export_to_excel(ns_dataframe, '{} - NS_Results'.format(filename_prepend))
 
-# if the task is to update sqlite database with client queries or export the contents of database
+# if the task is to update sqlite database with domain list or individual domain or export the contents of database
 else:
     if input_file is not None:
         logger.debug('Input file detected')

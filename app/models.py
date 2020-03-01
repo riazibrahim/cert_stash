@@ -19,6 +19,7 @@ class CertsMaster(Base):
     entry_timestamp = Column(String(100))
     not_before = Column(String(100))
     not_after = Column(String(100))
+    search_tag = Column(String(100))
 
     def __repr__(self):
         return 'This is the row id: {} , crtsh_id: {}, name_value: {}'.format(self.id, self.crtsh_id, self.name_value)

@@ -33,7 +33,7 @@ def get_cert(domain, export_outfile):
         # Creating dataframe in the event export option is given
         dataframe = pd.DataFrame(
             columns=['issuer_ca_id', 'issuer_name', 'name_value', 'crtsh_id', 'entry_timestamp', 'not_before',
-                     'not_after'])
+                     'not_after', 'search_tag'])
         logger.debug('Connecting to database')
         DBSession = sessionmaker(bind=engine)
         session = DBSession()
@@ -46,17 +46,18 @@ def get_cert(domain, export_outfile):
             entry_timestamp = cert['entry_timestamp']
             not_before = cert['not_before']
             not_after = cert['not_after']
+            search_tag = domain.rstrip()
             for name_value in name_values.splitlines():
                 cert_entry = CertsMaster(issuer_ca_id=issuer_ca_id, issuer_name=issuer_name.rstrip(),
                                          name_value=name_value.rstrip().lower(), crtsh_id=crtsh_id,
                                          entry_timestamp=entry_timestamp.rstrip(), not_before=not_before.rstrip(),
-                                         not_after=not_after.rstrip())
+                                         not_after=not_after.rstrip(), search_tag=search_tag.rstrip())
                 if export_outfile is not False:  # if -e or --export option is given
                     logger.debug('Detected excel output. Appending dataframe as --export or -e given')
                     dataframe = dataframe.append({'issuer_ca_id': issuer_ca_id, 'issuer_name': issuer_name,
                                                   'name_value': name_value.lower(), 'crtsh_id': crtsh_id,
                                                   'entry_timestamp': entry_timestamp, 'not_before': not_before,
-                                                  'not_after': not_after}, ignore_index=True)
+                                                  'not_after': not_after, 'search_tag': search_tag.rstrip()}, ignore_index=True)
                     logger.debug('Dataframe appended')
                 logger.debug('Adding entry to database: {} - {}'.format(cert_entry.issuer_ca_id, cert_entry.name_value))
                 session.add(cert_entry)

@@ -45,7 +45,7 @@ def resolve_domains(dataframe):
     # initiate a dataframe to hold dns resolving results
     logger.debug('Initiating dataframe to hold dns resolution results')
     ns_dataframe = pd.DataFrame(
-        columns=['name_value', 'IP address', 'CNAME'])
+        columns=['Domain Name', 'IP address', 'CNAME'])
     # initiating other variables to hold answers
     logger.info('Extracting unique domains/ urls into a list\n')
     uniq_domain_list = dataframe['name_value'].unique()
@@ -73,7 +73,7 @@ def resolve_domains(dataframe):
         except:
             logger.warning('Error in resolving CNAME record for {} ... moving on'.format(domain))
         logger.debug('Appending row to ns dataframe')
-        ns_dataframe = ns_dataframe.append({'name_value': domain,
+        ns_dataframe = ns_dataframe.append({'Domain Name': domain,
                                             'IP address': ip_list,
                                             'CNAME': cname_list}, ignore_index=True)
         logger.debug('Appended row to ns dataframe {}'.format(ns_dataframe['name_value']))
