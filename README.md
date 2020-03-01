@@ -39,7 +39,7 @@ pip install -r requirements.txt
 ## Running the tool
 ```
 
-Usage 1: To obtain certs of a single domain:
+## Usage 1: To obtain certs of a single domain:
 
 python cert_stash.py -d/ --domain digg.com
 
