@@ -4,12 +4,15 @@ import pandas as pd
 import sys
 
 filename_prepend = datetime.now().strftime("%Y%m%d-%H%M%S")
-# Takes a dataframe containing cert.sh data, exernal domains list and internal domains list as input. Outputs domains
+
+
+# Takes a dataframe containing cert.sh data, external domains list and internal domains list as input. Outputs domains
 # into exernal, internal and excluded. Returns external domains in a dataframe
 def filter_domains(internal_tld_file, external_tld_file, dataframe):
     logger.info('Internal TLD  file is {} \n'.format(internal_tld_file))
     logger.info('External TLD  file is {} \n'.format(external_tld_file))
-    if internal_tld_file is None or external_tld_file is None:  # Exit if input tld files are not given for --process option
+    if internal_tld_file is None or external_tld_file is None:  # Exit if input tld files are not given for --process
+        # option
         logger.warning('Please give "itld" and "etld" arguments. Printing default help\n')
         parser.print_help()  # Prints help if not argument is given to arg parse
         sys.exit()

@@ -16,10 +16,16 @@ def export_db_to_excel(engine, tablename, outfile, **kwargs):
         logger.debug('Read to dataframe from database into pandas')
         if not os.path.exists('outputs'):
             os.mkdir('outputs')
-        logger.info('Generating output in excel format\n')
         excel_dataframe = db_dataframe[db_dataframe['search_tag'].str.contains(r'\b{}\b'.format(search_tag))]
-        excel_dataframe.to_excel('outputs/{}.xlsx'.format(outfile))
-        logger.info('Generated {}.xlsx in outputs folder\n'.format(outfile))
+        if excel_dataframe.empty:
+            logger.warning('No records with the given search tag!!')
+            sys.exit('Exiting!')
+        else:
+            records_number = excel_dataframe.shape[0]
+            logger.info('Selected {} records for export ...'.format(records_number))
+            logger.info('Generating output in excel format')
+            excel_dataframe.to_excel('outputs/{}.xlsx'.format(outfile))
+            logger.info('Generated {}.xlsx in outputs folder'.format(outfile))
     else:
         logger.info('No search tag is given. Proceeding to download entire database')
         logger.debug('Reading {} table from database {} into pandas dataframe'.format(tablename, engine))
@@ -90,5 +96,5 @@ def resolve_domains(dataframe):
         ns_dataframe = ns_dataframe.append({'Domain Name': domain,
                                             'IP address': ip_list,
                                             'CNAME': cname_list}, ignore_index=True)
-        logger.debug('Appended row to ns dataframe {}'.format(ns_dataframe['name_value']))
+        logger.debug('Appended row to ns dataframe {}'.format(ns_dataframe['Domain Name']))
     return ns_dataframe

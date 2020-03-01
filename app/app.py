@@ -3,6 +3,7 @@ from app.utilities import export_db_to_excel, create_dataframe_from_sql, resolve
 from app.get_certs import get_cert
 from app.filter import filter_domains
 from datetime import datetime
+import sys
 
 filename_prepend = datetime.now().strftime("%Y%m%d-%H%M%S")
 
@@ -13,11 +14,12 @@ input_domain = args.domain
 export_all_outfile = args.export_all_outfile
 if export_all_outfile is not False:  # Create file naming if export_all option is present
     export_all_outfile = '{} - Export Master DB'.format(filename_prepend)
-    search_tag = args.search_tag  # Get the search tag if the option is given in conjunction with -eA
+    # search_tag = args.search_tag  # Get the search tag if the option is given in conjunction with -eA
 export_outfile = args.export_outfile
 if export_outfile is not False:  # Create file naming if export option is present
     export_outfile = '{} - Export Current Query'.format(filename_prepend)
 process = args.process
+search_tag = args.search_tag
 internal_tld_file = args.itld
 external_tld_file = args.etld
 
@@ -25,11 +27,26 @@ external_tld_file = args.etld
 if process is not None:
     logger.debug('Created dataframe from the database\n')
     dataframe = create_dataframe_from_sql(engine=engine, tablename='certsmaster')
-    # once dataframe is created from Sqlite database, send it as input to filter_domain to do filtering and get only
-    # external TLDs
-    logger.debug('Passing dataframe to filter_domains\n')
-    external_tld_df = filter_domains(internal_tld_file=internal_tld_file, external_tld_file=external_tld_file,
-                                     dataframe=dataframe)
+    if search_tag is not None:
+        logger.info('Detected tag :"{}"'.format(search_tag))
+        selected_dataframe = dataframe[dataframe['search_tag'].str.contains(r'\b{}\b'.format(search_tag))]
+        # once dataframe is selected with rows containing tag, send it as input to filter_domain to do filtering and
+        # get only external TLDs
+        if selected_dataframe.empty:
+            logger.warning('No records with the given search tag!!')
+            sys.exit('Exiting!')
+        else:
+            logger.info('Processing only selected data from backend database, based on "{}" tag\n'.format(search_tag))
+            logger.debug('Passing dataframe to filter_domains\n')
+            external_tld_df = filter_domains(internal_tld_file=internal_tld_file, external_tld_file=external_tld_file,
+                                             dataframe=selected_dataframe)
+    else: # original dataframe containing all rows goes for processing
+        # once dataframe is created from Sqlite database, send it as input to filter_domain to do filtering and get only
+        # external TLDs
+        logger.info('Processing all data from backend database\n')
+        logger.debug('Passing dataframe to filter_domains\n')
+        external_tld_df = filter_domains(internal_tld_file=internal_tld_file, external_tld_file=external_tld_file,
+                                         dataframe=dataframe)
     logger.info('Proceeding to resolve IP address/ CNAME for external domain\n')
     # Resolve the IP address and CNAME for each external domain filtered INPUT: External TLD dataframe
     ns_dataframe = resolve_domains(external_tld_df)
