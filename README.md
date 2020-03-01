@@ -43,15 +43,15 @@ pip install -r requirements.txt
 ```
 python cert_stash.py -d/ --domain digg.com
 ```
-### Usage 2: To obtain certs of domains list in a file
+##### Usage 2: To obtain certs of domains list in a file
 ```
 python cert_stash.py -f/ --file domain.lst
 ```
-### Usage 3: To output current results to an excel sheet
+##### Usage 3: To output current results to an excel sheet
 ```
 python cert_stash.py -d <domain_name> -e/ --export
 ```
-### Usage 4: To output entire local sqlite database (i.e. results of all previous and/ or current searches) with all historic search results to an excel sheet (can be used without any other argument)
+##### Usage 4: To output entire local sqlite database (i.e. results of all previous and/ or current searches) with all historic search results to an excel sheet (can be used without any other argument)
 ```
 python cert_stash.py -eA/ --export_all 
 
@@ -59,11 +59,11 @@ or
 
 python cert_stash.py -d <domain_name> -eA/ --export_all
 ```
-### Usage 5: Export only results pertaining to specific previous searches (all queries gets saved as search tag in database)
+##### Usage 5: Export only results pertaining to specific previous searches (all queries gets saved as search tag in database)
 ```
 python cert_stash.py -eA --tag <search tag>
 ```
-### Usage 6: Process domains/ subdomains in database to resolve IP and CNAME. Also produces 3 files which splits the records into external domain, internal domain and others
+##### Usage 6: Process domains/ subdomains in database to resolve IP and CNAME. Also produces 3 files which splits the records into external domain, internal domain and others
 ```
 python cert_stash.py --process filter -if INT_TLD_LOC.lst -ef EXT_TLD_LOC.lst --tag <previous_search>(optional) 
 
