@@ -61,7 +61,7 @@ python cert_stash.py -eA --tag <search tag>
 ```
 ##### Usage 6: Process domains/ subdomains in database to resolve IP and CNAME. Also produces 3 files which splits the records into external domain, internal domain and others
 ```
-python cert_stash.py --process filter -if INT_TLD_LOC.lst -ef EXT_TLD_LOC.lst --tag <previous_search>(optional) 
+python cert_stash.py --process filter -if <internal_tlds>.lst -ef <external_tlds>.lst --tag <previous_search>(optional) 
 
 ```
 
