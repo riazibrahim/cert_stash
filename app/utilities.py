@@ -7,15 +7,29 @@ import sys
 
 
 # Use pandas to connect to the database given in argument
-def export_db_to_excel(engine, tablename, outfile):
-    logger.debug('Reading {} table from database {} into pandas dataframe'.format(tablename, engine))
-    db_dataframe = pd.read_sql_table(table_name=tablename, con=engine)
-    logger.debug('Read to dataframe from database into pandas')
-    if not os.path.exists('outputs'):
-        os.mkdir('outputs')
-    logger.info('Generating output in excel format\n')
-    db_dataframe.to_excel('outputs/{}.xlsx'.format(outfile))
-    logger.info('Generated {}.xlsx in outputs folder\n'.format(outfile))
+def export_db_to_excel(engine, tablename, outfile, **kwargs):
+    search_tag = kwargs.get('search_tag', None)
+    if search_tag is not None:
+        logger.info('Exporting results for search tag :"{}"'.format(search_tag))
+        logger.debug('Reading {} table from database {} into pandas dataframe'.format(tablename, engine))
+        db_dataframe = pd.read_sql_table(table_name=tablename, con=engine)
+        logger.debug('Read to dataframe from database into pandas')
+        if not os.path.exists('outputs'):
+            os.mkdir('outputs')
+        logger.info('Generating output in excel format\n')
+        excel_dataframe = db_dataframe[db_dataframe['search_tag'].str.contains(r'\b{}\b'.format(search_tag))]
+        excel_dataframe.to_excel('outputs/{}.xlsx'.format(outfile))
+        logger.info('Generated {}.xlsx in outputs folder\n'.format(outfile))
+    else:
+        logger.info('No search tag is given. Proceeding to download entire database')
+        logger.debug('Reading {} table from database {} into pandas dataframe'.format(tablename, engine))
+        db_dataframe = pd.read_sql_table(table_name=tablename, con=engine)
+        logger.debug('Read to dataframe from database into pandas')
+        if not os.path.exists('outputs'):
+            os.mkdir('outputs')
+        logger.info('Generating output in excel format\n')
+        db_dataframe.to_excel('outputs/{}.xlsx'.format(outfile))
+        logger.info('Generated {}.xlsx in outputs folder\n'.format(outfile))
 
 
 def create_dataframe_from_sql(engine, tablename):

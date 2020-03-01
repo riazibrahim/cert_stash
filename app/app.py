@@ -11,10 +11,11 @@ logger.debug('Obtaining all arguments')
 input_file = args.file
 input_domain = args.domain
 export_all_outfile = args.export_all_outfile
-if export_all_outfile is not False:
+if export_all_outfile is not False:  # Create file naming if export_all option is present
     export_all_outfile = '{} - Export Master DB'.format(filename_prepend)
+    search_tag = args.search_tag  # Get the search tag if the option is given in conjunction with -eA
 export_outfile = args.export_outfile
-if export_outfile is not False:
+if export_outfile is not False:  # Create file naming if export option is present
     export_outfile = '{} - Export Current Query'.format(filename_prepend)
 process = args.process
 internal_tld_file = args.itld
@@ -24,9 +25,11 @@ external_tld_file = args.etld
 if process is not None:
     logger.debug('Created dataframe from the database\n')
     dataframe = create_dataframe_from_sql(engine=engine, tablename='certsmaster')
-    # once dataframe is created from Sqlite database, send it as input to filter_domain to do filtering and get only external TLDs
+    # once dataframe is created from Sqlite database, send it as input to filter_domain to do filtering and get only
+    # external TLDs
     logger.debug('Passing dataframe to filter_domains\n')
-    external_tld_df = filter_domains(internal_tld_file=internal_tld_file, external_tld_file=external_tld_file, dataframe=dataframe)
+    external_tld_df = filter_domains(internal_tld_file=internal_tld_file, external_tld_file=external_tld_file,
+                                     dataframe=dataframe)
     logger.info('Proceeding to resolve IP address/ CNAME for external domain\n')
     # Resolve the IP address and CNAME for each external domain filtered INPUT: External TLD dataframe
     ns_dataframe = resolve_domains(external_tld_df)
@@ -53,7 +56,7 @@ else:
 
     if export_all_outfile is not False:
         logger.debug('Export all option detected. Proceeding to export entire database into excel')
-        export_db_to_excel(engine=engine, tablename='certsmaster', outfile=export_all_outfile)
+        export_db_to_excel(engine=engine, tablename='certsmaster', outfile=export_all_outfile, search_tag=search_tag)
 
     # Print help if all arguments are none
     if input_file is None and export_all_outfile is False and input_domain is None:
