@@ -14,8 +14,8 @@ parser.add_argument('-f', '--file', dest='file', type=str, help='Give input file
 parser.add_argument('-d', '--domain', dest='domain', type=str, help='Give input domain name', required=False)
 parser.add_argument('-eA', '--export_all', dest='export_all_outfile', action='store_true',
                     help='Export entire database to Excel', required=False)
-parser.add_argument('-t', '--tag', dest='search_tag', type=str, help='Download results by search tag i.e. previous '
-                                                                     'search inputs. Use in conjunction with -eA/ '
+parser.add_argument('-t', '--tag', dest='search_tag', type=str, help='Download results by search "tag" i.e. previous '
+                                                                     'search items. Use in conjunction with -eA/ '
                                                                      '--export_all', required=False)
 parser.add_argument('-e', '--export', dest='export_outfile', action='store_true',
                     help='Export current query response to Excel', required=False)
