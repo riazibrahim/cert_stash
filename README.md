@@ -11,14 +11,12 @@ Download the latest version from Git Repo
 
 ```
 git clone git@github.com:riazibrahim/cert_stash.git
-
 ```
 
 Change to the source code folder
 
 ```
 cd cert_stash
-
 ```
 Start a new virtual environment
 
@@ -26,14 +24,12 @@ Start a new virtual environment
 python -m venv venv
 
 source venv/bin/activate
-
 ```
 
 Install all the requirements
 
 ```
 pip install -r requirements.txt
-
 ```
 
 ## Running the tool
