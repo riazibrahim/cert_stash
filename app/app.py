@@ -59,6 +59,7 @@ if process is not None:
 else:
     if input_domain_flag is not False:
         sys.exit('Not recommended, will be phased out soon! Sorry! \nExiting!!')
+        # TODO: check if valid domain names are given i.e. look for domain patterns in input and not just words
         if input_file is not None:
             logger.debug('Input file detected')
             with open(input_file, 'r') as file:
