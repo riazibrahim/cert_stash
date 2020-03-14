@@ -117,9 +117,14 @@ else:  # The request is not to process but update databases from CRT.SH i.e. pro
         # If Dataframe is not empty, first get the domains from the certs pages and update CertsMaster table
         uniq_certsh_id_list = certs_ref_df['crtsh_id'].unique()
         logger.info('Identified {} unique "crtsh ids" for resolving...\n'.format(len(uniq_certsh_id_list)))
+        logger.info('Identified {} rows in certs_ref_df dataframe...\n'.format(certs_ref_df.shape[0]))
+        if not len(uniq_certsh_id_list) == (certs_ref_df.shape[0]):
+            sys.exit('Error! Some issue unique crt sh ids are not same as certs_ref dataframe')
+        logger.info('Sanity check done, continuing ....\n')
         domains_list = []
         count = 1
-        for crtsh_id in uniq_certsh_id_list:
+        for index, row in certs_ref_df.iterrows():
+            crtsh_id = row['crtsh_id']
             logger.info('{}. Getting domains from the certificate "{}"'.format(count, crtsh_id))
             # TODO: Threading of these calls
             domains = get_domains_by_cert_ref(crtsh_id)
