@@ -8,11 +8,11 @@ from sqlalchemy.orm import sessionmaker
 import pandas as pd
 
 
-def get_cert(domain, export_outfile):
+def get_cert_by_domain_name(domain, export_outfile):
     logger.debug('Getting cert.sh URL from config.py')
     base_url = Config.CERTSH_API_URL
     counter = 0
-    url = base_url.format(domain.rstrip())
+    url = base_url.format(domain.strip())
     logger.info('Requesting cert.sh for {} domain'.format(domain))
     response = requests.get(url)
     '''
@@ -27,7 +27,8 @@ def get_cert(domain, export_outfile):
     '''
     # print('Troubleshoot: obtained response {}'.format(response.content))
     if response.ok:
-        logger.info('Obtained the certificates list from cert.sh for {} domain'.format(domain))
+        logger.info(
+            'Obtained the certificates list from cert.sh for {} domain'.format(domain))
         certs = json.loads(response.content)  # returns a dictionary
         logger.debug('Creating dataframe in the event export option is given')
         # Creating dataframe in the event export option is given
@@ -46,27 +47,103 @@ def get_cert(domain, export_outfile):
             entry_timestamp = cert['entry_timestamp']
             not_before = cert['not_before']
             not_after = cert['not_after']
-            search_tag = domain.rstrip()
+            search_tag = domain.strip()
             for name_value in name_values.splitlines():
-                cert_entry = CertsMaster(issuer_ca_id=issuer_ca_id, issuer_name=issuer_name.rstrip(),
-                                         name_value=name_value.rstrip().lower(), crtsh_id=crtsh_id,
-                                         entry_timestamp=entry_timestamp.rstrip(), not_before=not_before.rstrip(),
-                                         not_after=not_after.rstrip(), search_tag=search_tag.rstrip())
+                cert_entry = CertsMaster(issuer_ca_id=issuer_ca_id, issuer_name=issuer_name.strip(),
+                                         name_value=name_value.strip().lower(), crtsh_id=crtsh_id,
+                                         entry_timestamp=entry_timestamp.strip(), not_before=not_before.strip(),
+                                         not_after=not_after.strip(), search_tag=search_tag.strip())
                 if export_outfile is not False:  # if -e or --export option is given
-                    logger.debug('Detected excel output. Appending dataframe as --export or -e given')
+                    logger.debug(
+                        'Detected excel output. Appending dataframe as --export or -e given')
                     dataframe = dataframe.append({'issuer_ca_id': issuer_ca_id, 'issuer_name': issuer_name,
                                                   'name_value': name_value.lower(), 'crtsh_id': crtsh_id,
                                                   'entry_timestamp': entry_timestamp, 'not_before': not_before,
-                                                  'not_after': not_after, 'search_tag': search_tag.rstrip()}, ignore_index=True)
+                                                  'not_after': not_after, 'search_tag': search_tag.strip()}, ignore_index=True)
                     logger.debug('Dataframe appended')
-                logger.debug('Adding entry to database: {} - {}'.format(cert_entry.issuer_ca_id, cert_entry.name_value))
+                logger.debug('Adding entry to database: {} - {}'.format(
+                    cert_entry.issuer_ca_id, cert_entry.name_value))
                 session.add(cert_entry)
-                logger.debug('Added entry to database object in app (not committed yet)')
+                logger.debug(
+                    'Added entry to database object in app (not committed yet)')
                 counter += 1
         session.commit()
         logger.debug('Committed all entries to database')
-        logger.info('The master database is updated with {} records for {}'.format(counter, domain))
+        logger.info('The master database is updated with {} records for {}'.format(
+            counter, domain))
         #  if -e or --export option is given
         if export_outfile is not None:
-            logger.debug('Passing dataframe to utilities function generate excel')
+            logger.debug(
+                'Passing dataframe to utilities function generate excel')
+            export_to_excel(dataframe=dataframe, outfile=export_outfile)
+
+
+def get_cert_by_org(org_name, output_type, export_outfile):
+    logger.debug('Getting cert.sh URL from config.py')
+    base_url = Config.CERTSH_API_ORG_URL
+    counter = 0
+    url = base_url.format(org_name.strip(), output_type)
+    logger.info('Requesting cert.sh for {} org'.format(org_name))
+    response = requests.get(url)
+    '''
+        # format of the json response:
+            issuer_ca_id : 1191
+            issuer_name : "C=US, O=DigiCert Inc, CN=DigiCert SHA2 Secure Server CA"
+            name_value : "Infosys Limited.."
+            id : 2574327583
+            entry_timestamp : "2020-03-13T17:13:51.802"
+            not_before : "2020-03-03T00:00:00"
+            not_after : "2021-03-03T12:00:00"
+    '''
+    # print('Troubleshoot: obtained response {}'.format(response.content))
+    if response.ok:
+        logger.info(
+            'Obtained the certificates list from cert.sh for {} organisation'.format(org_name))
+        certs = json.loads(response.content)  # returns a dictionary
+        logger.debug('Creating dataframe in the event export option is given')
+        # Creating dataframe in the event export option is given
+        dataframe = pd.DataFrame(
+            columns=['issuer_ca_id', 'issuer_name', 'name_value', 'crtsh_id', 'entry_timestamp', 'not_before',
+                     'not_after', 'search_tag'])
+        logger.debug('Connecting to database')
+        DBSession = sessionmaker(bind=engine)
+        session = DBSession()
+        logger.debug('Session to database is established')
+        for cert in certs:
+            issuer_ca_id = cert['issuer_ca_id']
+            issuer_name = cert['issuer_name']
+            name_values = cert['name_value']
+            crtsh_id = cert['id']
+            entry_timestamp = cert['entry_timestamp']
+            not_before = cert['not_before']
+            not_after = cert['not_after']
+            # Additional search tag being added so we can use store searched org_name to filter out results by previous searches
+            search_tag = org_name.strip()
+            for name_value in name_values.splitlines():
+                cert_entry = CertsMaster(issuer_ca_id=issuer_ca_id, issuer_name=issuer_name.strip(),
+                                         name_value=name_value.strip().lower(), crtsh_id=crtsh_id,
+                                         entry_timestamp=entry_timestamp.strip(), not_before=not_before.strip(),
+                                         not_after=not_after.strip(), search_tag=search_tag.strip())
+                if export_outfile is not False:  # if -e or --export option is given
+                    logger.debug(
+                        'Detected excel output. Appending dataframe as --export or -e given')
+                    dataframe = dataframe.append({'issuer_ca_id': issuer_ca_id, 'issuer_name': issuer_name,
+                                                  'name_value': name_value.lower(), 'crtsh_id': crtsh_id,
+                                                  'entry_timestamp': entry_timestamp, 'not_before': not_before,
+                                                  'not_after': not_after, 'search_tag': search_tag.strip()}, ignore_index=True)
+                    logger.debug('Dataframe appended')
+                logger.debug('Adding entry to database: {} - {}'.format(
+                    cert_entry.issuer_ca_id, cert_entry.name_value))
+                session.add(cert_entry)
+                logger.debug(
+                    'Added entry to database object in app (not committed yet)')
+                counter += 1
+        session.commit()
+        logger.debug('Committed all entries to database')
+        logger.info('The master database is updated with {} records for {}'.format(
+            counter, org_name))
+        #  if -e or --export option is given
+        if export_outfile is not None:
+            logger.debug(
+                'Passing dataframe to utilities function generate excel')
             export_to_excel(dataframe=dataframe, outfile=export_outfile)
