@@ -89,7 +89,7 @@ else:  # The request is not to process but update databases from CRT.SH i.e. pro
                 for item in file.readlines():
                     org_name = item.rstrip()
                     logger.info('Processing client number {} : {}\n'.format(i, org_name))
-                    get_cert_refs_by_org(org_name=org_name, export_outfile=export_outfile)
+                    certs_ref_df = get_cert_refs_by_org(org_name=org_name, output_type='json', export_outfile=export_outfile)
                     i += 1
         if input_phrase is not None:
             logger.debug('Input domain detected')
@@ -97,7 +97,7 @@ else:  # The request is not to process but update databases from CRT.SH i.e. pro
             logger.info('Processing {}\n'.format(org_name))
             certs_ref_df = get_cert_refs_by_org(org_name=org_name, output_type='json', export_outfile=export_outfile)  # Returns a dataframe of output
             ''' 
-                Dataframe format:
+                certs_ref_df Dataframe format:
                 dataframe = pd.DataFrame(
                     columns=[
                         'issuer_ca_id', 
@@ -109,30 +109,37 @@ else:  # The request is not to process but update databases from CRT.SH i.e. pro
                         'not_after', 
                         'search_tag'])
             '''
-            if certs_ref_df.empty:
-                logger.info('No results returned.')
-                sys.exit('Exiting')
-            
-            # If Dataframe is not empty, Dataframe to update CertsMaster table
-            uniq_certsh_id_list = certs_ref_df['crtsh_id'].unique()
-            logger.info('Identified {} unique "crtsh ids" for resolving...\n'.format(len(uniq_certsh_id_list)))
-            domains_list = []
-            count = 1
-            for crtsh_id in uniq_certsh_id_list:
-                logger.info('{}. Getting domains from the certificate "{}"'.format(count, crtsh_id))
-                domains = get_domains_by_cert_ref(crtsh_id)
-                if len(domains) >0:
-                    logger.debug('identified {} domains from current cert entry...\n{}'.format(len(domains), domains))
-                    domains_list.extend(domains)
-                else:
-                    logger.debug('identified {} domains from current cert entry...\n{}'.format(
-                        len(domains), domains))
-                count += 1
-            logger.info('Finished all cert entries...')
-            logger.info('identified {} domains from all cert entries...\n{}'.format(len(domains_list), domains_list))
-            logger.info('Removing duplicates...')
-            unique_domains_list = list(dict.fromkeys(domains_list))
-            logger.info('There are {} unique domains from all cert entries...\n{}'.format(len(unique_domains_list), unique_domains_list))
+        # If Dataframe is empty, exit
+        if certs_ref_df.empty:
+            logger.info('No results returned.')
+            sys.exit('Exiting')
+        
+        # If Dataframe is not empty, first get the domains from the certs pages and update CertsMaster table
+        uniq_certsh_id_list = certs_ref_df['crtsh_id'].unique()
+        logger.info('Identified {} unique "crtsh ids" for resolving...\n'.format(len(uniq_certsh_id_list)))
+        domains_list = []
+        count = 1
+        for crtsh_id in uniq_certsh_id_list:
+            logger.info('{}. Getting domains from the certificate "{}"'.format(count, crtsh_id))
+            # TODO: Threading of these calls
+            domains = get_domains_by_cert_ref(crtsh_id)
+            if len(domains) >0:
+                logger.debug('identified {} domains from current cert entry...\n{}'.format(len(domains), domains))
+                domains_list.extend(domains)
+                # TODO: Add the current domains list to the CertsMaster database, format as below:
+                '''cert_entry = CertsMaster(issuer_ca_id=issuer_ca_id, issuer_name=issuer_name.strip(),
+                                         domain_name=name_value.strip().lower(), crtsh_id=crtsh_id,
+                                         entry_timestamp=entry_timestamp.strip(), not_before=not_before.strip(),
+                                         not_after=not_after.strip(), search_tag=search_tag.strip())'''
+            else:
+                logger.debug('identified {} domains from current cert entry...\n{}'.format(
+                    len(domains), domains))
+            count += 1
+        logger.info('Finished all cert entries...')
+        logger.info('identified {} domains from all cert entries...\n{}'.format(len(domains_list), domains_list))
+        logger.info('Removing duplicates...')
+        unique_domains_list = list(dict.fromkeys(domains_list))
+        logger.info('There are {} unique domains from all cert entries...\n{}'.format(len(unique_domains_list), unique_domains_list))
 
         if export_all_outfile is not False:
             logger.debug('Export all option detected. Proceeding to export entire database into excel')
