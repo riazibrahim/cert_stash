@@ -56,7 +56,7 @@ if process is not None:
     export_to_excel(ns_dataframe, '{} - NS_Results'.format(filename_prepend))
 
 # if the task is to update sqlite database with domain list or individual domain or export the contents of database
-else:
+else:  # The request is not to process but update databases from CRT.SH i.e. process arg not given
     if input_domain_flag is not False:
         sys.exit('Not recommended, will be phased out soon! Sorry! \nExiting!!')
         # TODO: check if valid domain names are given i.e. look for domain patterns in input and not just words

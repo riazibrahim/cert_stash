@@ -6,6 +6,9 @@ from app.utilities import export_to_excel
 from config import Config
 from sqlalchemy.orm import sessionmaker
 import pandas as pd
+from bs4 import BeautifulSoup
+import lxml
+import regex as re
 
 
 def get_cert_by_domain_name(domain, export_outfile):
@@ -150,3 +153,19 @@ def get_cert_refs_by_org(org_name, output_type, export_outfile):
             logger.debug(
                 'Passing dataframe to utilities function generate excel')
             export_to_excel(dataframe=dataframe, outfile=export_outfile)
+
+
+def get_domains_by_cert_ref():
+    baseurl = Config.CERTSH_API_REQUEST_ID_URL
+    # https://crt.sh/?id=2574327583
+    id = '2526431183'
+    output_format = 'html'  # Hard coded
+    curr_cert_url = baseurl.format(id, output_format)
+    response = requests.get(curr_cert_url)
+    soup = BeautifulSoup(response.content, 'lxml')
+    # items = soup.find_all(text=re.compile('DNS:[A-Za-z0-9]*[.][a-zA-Z0-9]*'))
+    items = soup.find_all(text=re.compile('DNS:[A-Za-z0-9]*[.][a-zA-Z0-9]*'))
+    for item in items:
+        domain = item.split(':')[1]
+        # logger.info('identifed {}'.format(item))
+        print('identifed {}'.format(domain))
