@@ -10,21 +10,59 @@ import sys
 
 # Defining arguments and creating the args object
 parser = argparse.ArgumentParser(allow_abbrev=False, description='A tool for passive threat intel based on DNS and SSL')
-parser.add_argument('-f', '--file', dest='file', type=str, help='Give input filename', required=False)
-parser.add_argument('-d', '--domain', dest='domain', type=str, help='Give input domain name', required=False)
-parser.add_argument('-eA', '--export_all', dest='export_all_outfile', action='store_true',
-                    help='Export entire database to Excel', required=False)
-parser.add_argument('-t', '--tag', dest='search_tag', type=str, help='Download results by search "tag" i.e. previous '
-                                                                     'search items. Use in conjunction with -eA/ '
-                                                                     '--export_all', required=False)
-parser.add_argument('-e', '--export', dest='export_outfile', action='store_true',
-                    help='Export current query response to Excel', required=False)
-parser.add_argument('-p', '--process', dest='process', type=str, choices=['filter'],
-                    help='Process the domains in sqlite database to find potential internal domains', required=False)
-parser.add_argument('-if', '--internalTLDFile', dest='itld', type=str,
-                    help='To use with --process. Give internal tlds in file', required=False)
-parser.add_argument('-ef', '--externalTLDFile', dest='etld', type=str,
-                    help='To use with --process. Give external tlds in file', required=False)
+group_input_mode = parser.add_mutually_exclusive_group(required=False)
+group_input_mode.add_argument('-f', '--file',
+                              dest='file',
+                              type=str,
+                              help='Give input filename',
+                              required=False)
+group_input_mode.add_argument('-i', '--input',
+                              dest='input',
+                              type=str,
+                              help='Give input phrase i.e. org name or domain name',
+                              required=False)
+group_org_or_domain = parser.add_mutually_exclusive_group(required=False)
+group_org_or_domain.add_argument('-d', '--domain',
+                                 dest='domain',
+                                 action='store_true',
+                                 help='Indicate if input given is domain name. WARNING! NOT RECOMMENDED, Give -o/--org instead with organization names as input',
+                                 required=False)
+group_org_or_domain.add_argument('-o', '--org',
+                                 dest='org',
+                                 action='store_true',
+                                 help='Indicate if input given is organization name',
+                                 required=False)
+parser.add_argument('-eA', '--export_all',
+                    dest='export_all_outfile',
+                    action='store_true',
+                    help='Export entire database to Excel',
+                    required=False)
+parser.add_argument('-t', '--tag',
+                    dest='search_tag',
+                    type=str,
+                    help='Download results by search "tag" i.e. previous search items. Use in conjunction with -eA/ --export_all',
+                    required=False)
+parser.add_argument('-e', '--export',
+                    dest='export_outfile',
+                    action='store_true',
+                    help='Export current query response to Excel',
+                    required=False)
+parser.add_argument('-p', '--process',
+                    dest='process',
+                    type=str,
+                    choices=['filter'],
+                    help='Process the domains in sqlite database to find potential internal domains',
+                    required=False)
+parser.add_argument('-if', '--internalTLDFile',
+                    dest='itld',
+                    type=str,
+                    help='To use with --process. Give internal tlds in file',
+                    required=False)
+parser.add_argument('-ef', '--externalTLDFile',
+                    dest='etld',
+                    type=str,
+                    help='To use with --process. Give external tlds in file',
+                    required=False)
 
 args = parser.parse_args()
 

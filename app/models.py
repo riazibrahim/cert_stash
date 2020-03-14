@@ -15,7 +15,7 @@ class CertsMaster(Base):
     issuer_ca_id = Column(Integer, index=True)
     issuer_name = Column(String(500), index=True)
     crtsh_id = Column(Integer, index=True)
-    name_value = Column(String(500), index=True)
+    domain_name = Column(String(500), index=True)
     entry_timestamp = Column(String(100))
     not_before = Column(String(100))
     not_after = Column(String(100))
@@ -23,3 +23,22 @@ class CertsMaster(Base):
 
     def __repr__(self):
         return 'This is the row id: {} , crtsh_id: {}, name_value: {}'.format(self.id, self.crtsh_id, self.name_value)
+
+class OrgsCertsRefsMaster(Base):
+    """Data model example."""
+    __tablename__ = 'orgscertsrefsmaster'
+    # __table_args__ = {'schema': 'orgscertsrefsmaster'}
+
+    id = Column(Integer, primary_key=True, nullable=False)
+    issuer_ca_id = Column(Integer, index=True)
+    issuer_name = Column(String(500), index=True)
+    crtsh_id = Column(Integer, index=True)
+    org_name = Column(String(500), index=True)
+    entry_timestamp = Column(String(100))
+    not_before = Column(String(100))
+    not_after = Column(String(100))
+    search_tag = Column(String(100))
+
+    def __repr__(self):
+        return 'This is the row id: {} , crtsh_id: {}, name_value: {}'.format(self.id, self.crtsh_id, self.name_value)
+

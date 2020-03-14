@@ -1,7 +1,7 @@
 import requests
 import json
 from app import engine, logger
-from app.models import CertsMaster
+from app.models import CertsMaster, OrgsCertsRefsMaster
 from app.utilities import export_to_excel
 from config import Config
 from sqlalchemy.orm import sessionmaker
@@ -50,7 +50,7 @@ def get_cert_by_domain_name(domain, export_outfile):
             search_tag = domain.strip()
             for name_value in name_values.splitlines():
                 cert_entry = CertsMaster(issuer_ca_id=issuer_ca_id, issuer_name=issuer_name.strip(),
-                                         name_value=name_value.strip().lower(), crtsh_id=crtsh_id,
+                                         domain_name=name_value.strip().lower(), crtsh_id=crtsh_id,
                                          entry_timestamp=entry_timestamp.strip(), not_before=not_before.strip(),
                                          not_after=not_after.strip(), search_tag=search_tag.strip())
                 if export_outfile is not False:  # if -e or --export option is given
@@ -59,7 +59,8 @@ def get_cert_by_domain_name(domain, export_outfile):
                     dataframe = dataframe.append({'issuer_ca_id': issuer_ca_id, 'issuer_name': issuer_name,
                                                   'name_value': name_value.lower(), 'crtsh_id': crtsh_id,
                                                   'entry_timestamp': entry_timestamp, 'not_before': not_before,
-                                                  'not_after': not_after, 'search_tag': search_tag.strip()}, ignore_index=True)
+                                                  'not_after': not_after, 'search_tag': search_tag.strip()},
+                                                 ignore_index=True)
                     logger.debug('Dataframe appended')
                 logger.debug('Adding entry to database: {} - {}'.format(
                     cert_entry.issuer_ca_id, cert_entry.name_value))
@@ -78,7 +79,7 @@ def get_cert_by_domain_name(domain, export_outfile):
             export_to_excel(dataframe=dataframe, outfile=export_outfile)
 
 
-def get_cert_by_org(org_name, output_type, export_outfile):
+def get_cert_refs_by_org(org_name, output_type, export_outfile):
     logger.debug('Getting cert.sh URL from config.py')
     base_url = Config.CERTSH_API_ORG_URL
     counter = 0
@@ -98,12 +99,12 @@ def get_cert_by_org(org_name, output_type, export_outfile):
     # print('Troubleshoot: obtained response {}'.format(response.content))
     if response.ok:
         logger.info(
-            'Obtained the certificates list from cert.sh for {} organisation'.format(org_name))
+            'Obtained the certificates references list from cert.sh for {} organisation'.format(org_name))
         certs = json.loads(response.content)  # returns a dictionary
         logger.debug('Creating dataframe in the event export option is given')
         # Creating dataframe in the event export option is given
         dataframe = pd.DataFrame(
-            columns=['issuer_ca_id', 'issuer_name', 'name_value', 'crtsh_id', 'entry_timestamp', 'not_before',
+            columns=['issuer_ca_id', 'issuer_name', 'org_name', 'crtsh_id', 'entry_timestamp', 'not_before',
                      'not_after', 'search_tag'])
         logger.debug('Connecting to database')
         DBSession = sessionmaker(bind=engine)
@@ -120,21 +121,23 @@ def get_cert_by_org(org_name, output_type, export_outfile):
             # Additional search tag being added so we can use store searched org_name to filter out results by previous searches
             search_tag = org_name.strip()
             for name_value in name_values.splitlines():
-                cert_entry = CertsMaster(issuer_ca_id=issuer_ca_id, issuer_name=issuer_name.strip(),
-                                         name_value=name_value.strip().lower(), crtsh_id=crtsh_id,
-                                         entry_timestamp=entry_timestamp.strip(), not_before=not_before.strip(),
-                                         not_after=not_after.strip(), search_tag=search_tag.strip())
+                cert_refs_entry = OrgsCertsRefsMaster(issuer_ca_id=issuer_ca_id, issuer_name=issuer_name.strip(),
+                                                      org_name=name_value.strip().lower(), crtsh_id=crtsh_id,
+                                                      entry_timestamp=entry_timestamp.strip(),
+                                                      not_before=not_before.strip(),
+                                                      not_after=not_after.strip(), search_tag=search_tag.strip())
                 if export_outfile is not False:  # if -e or --export option is given
                     logger.debug(
                         'Detected excel output. Appending dataframe as --export or -e given')
                     dataframe = dataframe.append({'issuer_ca_id': issuer_ca_id, 'issuer_name': issuer_name,
-                                                  'name_value': name_value.lower(), 'crtsh_id': crtsh_id,
+                                                  'org_name': name_value.lower(), 'crtsh_id': crtsh_id,
                                                   'entry_timestamp': entry_timestamp, 'not_before': not_before,
-                                                  'not_after': not_after, 'search_tag': search_tag.strip()}, ignore_index=True)
+                                                  'not_after': not_after, 'search_tag': search_tag.strip()},
+                                                 ignore_index=True)
                     logger.debug('Dataframe appended')
                 logger.debug('Adding entry to database: {} - {}'.format(
-                    cert_entry.issuer_ca_id, cert_entry.name_value))
-                session.add(cert_entry)
+                    cert_refs_entry.issuer_ca_id, cert_refs_entry.org_name))
+                session.add(cert_refs_entry)
                 logger.debug(
                     'Added entry to database object in app (not committed yet)')
                 counter += 1

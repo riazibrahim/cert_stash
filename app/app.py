@@ -1,6 +1,6 @@
 from app import args, logger, engine, parser
 from app.utilities import export_db_to_excel, create_dataframe_from_sql, resolve_domains, export_to_excel
-from app.get_certs import get_cert
+from app.get_certs import get_cert_refs_by_org, get_cert_by_domain_name
 from app.filter import filter_domains
 from datetime import datetime
 import sys
@@ -10,7 +10,9 @@ filename_prepend = datetime.now().strftime("%Y%m%d-%H%M%S")
 # Gather all arguments
 logger.debug('Obtaining all arguments')
 input_file = args.file
-input_domain = args.domain
+input_phrase = args.input
+input_domain_flag = args.domain  # True or false
+input_org_flag = args.org  # True or false
 export_all_outfile = args.export_all_outfile
 if export_all_outfile is not False:  # Create file naming if export_all option is present
     export_all_outfile = '{} - Export Master DB'.format(filename_prepend)
@@ -55,28 +57,52 @@ if process is not None:
 
 # if the task is to update sqlite database with domain list or individual domain or export the contents of database
 else:
-    if input_file is not None:
-        logger.debug('Input file detected')
-        with open(input_file, 'r') as file:
-            logger.debug('Opened input file {}'.format(input_file))
-            i = 1
-            for item in file.readlines():
-                domain = item.rstrip()
-                logger.info('Processing client number {} : {}\n'.format(i, domain))
-                get_cert(domain=domain, export_outfile=export_outfile)
-                i += 1
-    elif input_domain is not None:
-        logger.debug('Input domain detected')
-        domain = input_domain.rstrip()
-        logger.info('Processing {}\n'.format(domain))
-        get_cert(domain=domain, export_outfile=export_outfile)
+    if input_domain_flag is not False:
+        sys.exit('Not recommended, will be phased out soon! Sorry! \nExiting!!')
+        if input_file is not None:
+            logger.debug('Input file detected')
+            with open(input_file, 'r') as file:
+                logger.debug('Opened input file {}'.format(input_file))
+                i = 1
+                for item in file.readlines():
+                    domain = item.rstrip()
+                    logger.info('Processing client number {} : {}\n'.format(i, domain))
+                    get_cert_by_domain_name(domain=domain, export_outfile=export_outfile)
+                    i += 1
+        if input_phrase is not None:
+            logger.debug('Input domain detected')
+            domain = input_phrase.rstrip()
+            logger.info('Processing {}\n'.format(domain))
+            get_cert_by_domain_name(domain=domain, export_outfile=export_outfile)
 
-    if export_all_outfile is not False:
-        logger.debug('Export all option detected. Proceeding to export entire database into excel')
-        export_db_to_excel(engine=engine, tablename='certsmaster', outfile=export_all_outfile, search_tag=search_tag)
+        if export_all_outfile is not False:
+            logger.debug('Export all option detected. Proceeding to export entire database into excel')
+            export_db_to_excel(engine=engine, tablename='certsmaster', outfile=export_all_outfile,
+                               search_tag=search_tag)
+    if input_org_flag is not False:
+        if input_file is not None:
+            logger.debug('Input file detected')
+            with open(input_file, 'r') as file:
+                logger.debug('Opened input file {}'.format(input_file))
+                i = 1
+                for item in file.readlines():
+                    org_name = item.rstrip()
+                    logger.info('Processing client number {} : {}\n'.format(i, org_name))
+                    get_cert_refs_by_org(org_name=org_name, export_outfile=export_outfile)
+                    i += 1
+        if input_phrase is not None:
+            logger.debug('Input domain detected')
+            org_name = input_phrase.rstrip()
+            logger.info('Processing {}\n'.format(org_name))
+            get_cert_refs_by_org(org_name=org_name, output_type='json', export_outfile=export_outfile)
+
+        if export_all_outfile is not False:
+            logger.debug('Export all option detected. Proceeding to export entire database into excel')
+            export_db_to_excel(engine=engine, tablename='orgscertsrefsmaster', outfile=export_all_outfile,
+                               search_tag=search_tag)
 
     # Print help if all arguments are none
-    if input_file is None and export_all_outfile is False and input_domain is None:
+    if input_file is None and export_all_outfile is False and input_phrase is None:
         logger.info('No arguments given. Printing default help\n')
         parser.print_help()  # Prints help if not argument is given to arg parse
 
