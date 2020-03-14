@@ -1,6 +1,6 @@
 from app import args, logger, engine, parser
 from app.utilities import export_db_to_excel, create_dataframe_from_sql, resolve_domains, export_to_excel
-from app.get_certs import get_cert_refs_by_org, get_cert_by_domain_name
+from app.get_certs import get_cert_refs_by_org, get_cert_by_domain_name, get_domains_by_cert_ref
 from app.filter import filter_domains
 from datetime import datetime
 import sys
@@ -95,7 +95,31 @@ else:  # The request is not to process but update databases from CRT.SH i.e. pro
             logger.debug('Input domain detected')
             org_name = input_phrase.rstrip()
             logger.info('Processing {}\n'.format(org_name))
-            get_cert_refs_by_org(org_name=org_name, output_type='json', export_outfile=export_outfile)
+            certs_ref_df = get_cert_refs_by_org(org_name=org_name, output_type='json', export_outfile=export_outfile)  # Returns a dataframe of output
+            ''' 
+                Dataframe format:
+                dataframe = pd.DataFrame(
+                    columns=[
+                        'issuer_ca_id', 
+                        'issuer_name', 
+                        'org_name', 
+                        'crtsh_id', 
+                        'entry_timestamp', 
+                        'not_before', 
+                        'not_after', 
+                        'search_tag'])
+            '''
+            if certs_ref_df.empty:
+                logger.info('No results returned.')
+                sys.exit('Exiting')
+            
+            # If Dataframe is not empty, Dataframe to update CertsMaster table
+            uniq_certsh_id_list = certs_ref_df['crtsh_id'].unique()
+            logger.info(
+                'Identified {} unique "crtsh ids" for resolving...\n'.format(len(uniq_certsh_id_list)))
+            for crtsh_id in uniq_certsh_id_list:
+                get_domains_by_cert_ref(crtsh_id)
+
 
         if export_all_outfile is not False:
             logger.debug('Export all option detected. Proceeding to export entire database into excel')
@@ -107,5 +131,5 @@ else:  # The request is not to process but update databases from CRT.SH i.e. pro
         logger.info('No arguments given. Printing default help\n')
         parser.print_help()  # Prints help if not argument is given to arg parse
 
-logger.debug('Collision has finished processing.')
+logger.info('Cert Stash has finished processing...')
 logger.info('Done!\n')

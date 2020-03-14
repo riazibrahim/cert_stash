@@ -8,7 +8,8 @@ from sqlalchemy.orm import sessionmaker
 import pandas as pd
 from bs4 import BeautifulSoup
 import lxml
-import regex as re
+import regex as reg
+import sys
 
 
 def get_cert_by_domain_name(domain, export_outfile):
@@ -86,8 +87,9 @@ def get_cert_refs_by_org(org_name, output_type, export_outfile):
     logger.debug('Getting cert.sh URL from config.py')
     base_url = Config.CERTSH_API_ORG_URL
     counter = 0
-    url = base_url.format(org_name.strip(), output_type)
+    url = base_url.format('%20'.join(org_name.strip().split(' ')), output_type)
     logger.info('Requesting cert.sh for {} org'.format(org_name))
+    logger.debug('Requesting the URL {}'.format(url))
     response = requests.get(url)
     '''
         # format of the json response:
@@ -99,7 +101,7 @@ def get_cert_refs_by_org(org_name, output_type, export_outfile):
             not_before : "2020-03-03T00:00:00"
             not_after : "2021-03-03T12:00:00"
     '''
-    # print('Troubleshoot: obtained response {}'.format(response.content))
+    logger.debug('Troubleshoot: obtained response {}'.format(response.content))
     if response.ok:
         logger.info(
             'Obtained the certificates references list from cert.sh for {} organisation'.format(org_name))
@@ -129,15 +131,15 @@ def get_cert_refs_by_org(org_name, output_type, export_outfile):
                                                       entry_timestamp=entry_timestamp.strip(),
                                                       not_before=not_before.strip(),
                                                       not_after=not_after.strip(), search_tag=search_tag.strip())
-                if export_outfile is not False:  # if -e or --export option is given
-                    logger.debug(
-                        'Detected excel output. Appending dataframe as --export or -e given')
-                    dataframe = dataframe.append({'issuer_ca_id': issuer_ca_id, 'issuer_name': issuer_name,
-                                                  'org_name': name_value.lower(), 'crtsh_id': crtsh_id,
-                                                  'entry_timestamp': entry_timestamp, 'not_before': not_before,
-                                                  'not_after': not_after, 'search_tag': search_tag.strip()},
-                                                 ignore_index=True)
-                    logger.debug('Dataframe appended')
+                # if export_outfile is not False:  # if -e or --export option is given
+                logger.debug(
+                    'Appending dataframe which needs to be used for updating CertsMaster')
+                dataframe = dataframe.append({'issuer_ca_id': issuer_ca_id, 'issuer_name': issuer_name,
+                                                'org_name': name_value.lower(), 'crtsh_id': crtsh_id,
+                                                'entry_timestamp': entry_timestamp, 'not_before': not_before,
+                                                'not_after': not_after, 'search_tag': search_tag.strip()},
+                                                ignore_index=True)
+                logger.debug('Dataframe appended')
                 logger.debug('Adding entry to database: {} - {}'.format(
                     cert_refs_entry.issuer_ca_id, cert_refs_entry.org_name))
                 session.add(cert_refs_entry)
@@ -153,19 +155,33 @@ def get_cert_refs_by_org(org_name, output_type, export_outfile):
             logger.debug(
                 'Passing dataframe to utilities function generate excel')
             export_to_excel(dataframe=dataframe, outfile=export_outfile)
+        return dataframe
+    else:
+        logger.info('Error! Did not recieve server response, please check URL')
+        sys.exit('Exiting!!')
 
 
-def get_domains_by_cert_ref():
+def get_domains_by_cert_ref(cert_ref_id):
+    logger.debug('Entered "get_domains_by_cert_ref" function...')
+    logger.info('Getting domains from the certificate "{}"'.format(cert_ref_id))
     baseurl = Config.CERTSH_API_REQUEST_ID_URL
     # https://crt.sh/?id=2574327583
-    id = '2526431183'
+    # id = '2526431183'
+    id = str(cert_ref_id).strip()
     output_format = 'html'  # Hard coded
     curr_cert_url = baseurl.format(id, output_format)
     response = requests.get(curr_cert_url)
     soup = BeautifulSoup(response.content, 'lxml')
-    # items = soup.find_all(text=re.compile('DNS:[A-Za-z0-9]*[.][a-zA-Z0-9]*'))
-    items = soup.find_all(text=re.compile('DNS:[A-Za-z0-9]*[.][a-zA-Z0-9]*'))
-    for item in items:
+    # items = soup.find_all(text=reg.compile('DNS:[A-Za-z0-9]*[.][a-zA-Z0-9]*'))
+    domain_list = []
+    dns_items = soup.find_all(text=reg.compile('DNS[\s]*:[\s]*([^\s]+[.][\S]+){1,}'))
+    # commonName_items = soup.find_all(text=reg.compile('commonName[\s]*=[\s]([A-Za-z0-9]*[.]*[a-zA-Z0-9]*){1,}'))
+    commonName_items = soup.find_all(text=reg.compile('commonName[\s]*=[\s]([^\s]+[.][\S]+){1,}'))
+    for item in dns_items:
         domain = item.split(':')[1]
         # logger.info('identifed {}'.format(item))
-        print('identifed {}'.format(domain))
+        print('identifed DNS:{}'.format(domain))
+    for item in commonName_items:
+        domain = item.split('=')[1]
+        # logger.info('identifed {}'.format(item))
+        print('identifed commonName:{}'.format(domain))
