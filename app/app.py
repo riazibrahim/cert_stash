@@ -115,11 +115,24 @@ else:  # The request is not to process but update databases from CRT.SH i.e. pro
             
             # If Dataframe is not empty, Dataframe to update CertsMaster table
             uniq_certsh_id_list = certs_ref_df['crtsh_id'].unique()
-            logger.info(
-                'Identified {} unique "crtsh ids" for resolving...\n'.format(len(uniq_certsh_id_list)))
+            logger.info('Identified {} unique "crtsh ids" for resolving...\n'.format(len(uniq_certsh_id_list)))
+            domains_list = []
+            count = 1
             for crtsh_id in uniq_certsh_id_list:
-                get_domains_by_cert_ref(crtsh_id)
-
+                logger.info('{}. Getting domains from the certificate "{}"'.format(count, crtsh_id))
+                domains = get_domains_by_cert_ref(crtsh_id)
+                if len(domains) >0:
+                    logger.debug('identified {} domains from current cert entry...\n{}'.format(len(domains), domains))
+                    domains_list.extend(domains)
+                else:
+                    logger.debug('identified {} domains from current cert entry...\n{}'.format(
+                        len(domains), domains))
+                count += 1
+            logger.info('Finished all cert entries...')
+            logger.info('identified {} domains from all cert entries...\n{}'.format(len(domains_list), domains_list))
+            logger.info('Removing duplicates...')
+            unique_domains_list = list(dict.fromkeys(domains_list))
+            logger.info('There are {} unique domains from all cert entries...\n{}'.format(len(unique_domains_list), unique_domains_list))
 
         if export_all_outfile is not False:
             logger.debug('Export all option detected. Proceeding to export entire database into excel')

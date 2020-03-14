@@ -163,7 +163,7 @@ def get_cert_refs_by_org(org_name, output_type, export_outfile):
 
 def get_domains_by_cert_ref(cert_ref_id):
     logger.debug('Entered "get_domains_by_cert_ref" function...')
-    logger.info('Getting domains from the certificate "{}"'.format(cert_ref_id))
+    logger.debug('Getting domains from the certificate "{}"'.format(cert_ref_id))
     baseurl = Config.CERTSH_API_REQUEST_ID_URL
     # https://crt.sh/?id=2574327583
     # id = '2526431183'
@@ -174,14 +174,20 @@ def get_domains_by_cert_ref(cert_ref_id):
     soup = BeautifulSoup(response.content, 'lxml')
     # items = soup.find_all(text=reg.compile('DNS:[A-Za-z0-9]*[.][a-zA-Z0-9]*'))
     domain_list = []
+    # obtain all entries starting with DNS: xx.com
     dns_items = soup.find_all(text=reg.compile('DNS[\s]*:[\s]*([^\s]+[.][\S]+){1,}'))
-    # commonName_items = soup.find_all(text=reg.compile('commonName[\s]*=[\s]([A-Za-z0-9]*[.]*[a-zA-Z0-9]*){1,}'))
+    # # obtain all entries starting with commonName = xx.com
     commonName_items = soup.find_all(text=reg.compile('commonName[\s]*=[\s]([^\s]+[.][\S]+){1,}'))
     for item in dns_items:
         domain = item.split(':')[1]
-        # logger.info('identifed {}'.format(item))
-        print('identifed DNS:{}'.format(domain))
+        # logger.info('identifed DNS {}'.format(domain))
+        # print('identifed DNS:{}'.format(domain))
+        if domain is not None:
+            domain_list.append(domain.strip())
     for item in commonName_items:
         domain = item.split('=')[1]
-        # logger.info('identifed {}'.format(item))
-        print('identifed commonName:{}'.format(domain))
+        # logger.info('identifed commonName {}'.format(domain))
+        if domain is not None:
+            domain_list.append(domain.strip())
+        # print('identifed commonName:{}'.format(domain))
+    return domain_list
