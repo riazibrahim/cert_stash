@@ -1,11 +1,12 @@
 from app import args, logger, engine, parser
 from app.utilities import export_db_to_excel, create_dataframe_from_sql, resolve_domains, export_to_excel
-from app.get_certs import get_cert_refs_by_org, get_cert_by_domain_name, get_domains_by_cert_ref
+from app.get_certs import get_cert_ids_by_org, get_cert_by_domain_name, get_domains_from_cert_ids
 from app.filter import filter_domains
 from app.models import CertsMaster
 from datetime import datetime
 import sys
 from sqlalchemy.orm import sessionmaker
+import pandas as pd
 
 filename_prepend = datetime.now().strftime("%Y%m%d-%H%M%S")
 
@@ -91,26 +92,24 @@ else:  # The request is not to process but update databases from CRT.SH i.e. pro
                 for item in file.readlines():
                     org_name = item.rstrip()
                     logger.info('Processing client number {} : {}\n'.format(i, org_name))
-                    certs_ref_df = get_cert_refs_by_org(org_name=org_name, output_type='json', export_outfile=export_outfile)
+                    certs_ref_df = get_cert_ids_by_org(org_name=org_name, output_type='json', export_outfile=export_outfile)
                     i += 1
         if input_phrase is not None:
             logger.debug('Input domain detected')
             org_name = input_phrase.rstrip()
             logger.info('Processing {}\n'.format(org_name))
-            certs_ref_df = get_cert_refs_by_org(org_name=org_name, output_type='json', export_outfile=export_outfile)  # Returns a dataframe of output
-            ''' 
-                certs_ref_df Dataframe format:
-                certs_ref_df = pd.DataFrame(
-                    columns=[
-                        'issuer_ca_id', 
-                        'issuer_name', 
-                        'org_name', 
-                        'crtsh_id', 
-                        'entry_timestamp', 
-                        'not_before', 
-                        'not_after', 
-                        'search_tag'])
-            '''
+            temp_certsmaster_df = pd.DataFrame(
+                columns=[
+                    'issuer_ca_id',
+                    'issuer_name',
+                    'domain_name',
+                    'crtsh_id',
+                    'entry_timestamp',
+                    'not_before',
+                    'not_after',
+                    'search_tag'])
+            certs_ref_df = get_cert_ids_by_org(org_name=org_name, output_type='json', export_outfile=export_outfile)  # Returns a dataframe of output
+
         # If Dataframe is empty, exit
         if certs_ref_df.empty:
             logger.info('No results returned.')
@@ -133,7 +132,7 @@ else:  # The request is not to process but update databases from CRT.SH i.e. pro
             crtsh_id = row['crtsh_id']
             logger.info('{}. Getting domains from the certificate "{}"'.format(count, crtsh_id))
             # TODO: Threading of these calls
-            domains = get_domains_by_cert_ref(crtsh_id) # Returns list of domains from the certsh html pages
+            domains = get_domains_from_cert_ids(crtsh_id) # Returns list of domains from the certsh html pages
             if len(domains) >0:
                 logger.debug('identified {} domains from current cert entry...\n{}'.format(len(domains), domains))
                 domains_list.extend(domains)
@@ -153,12 +152,33 @@ else:  # The request is not to process but update databases from CRT.SH i.e. pro
                     logger.debug('Adding entry to database: {} - {}'.format(cert_entry.issuer_ca_id, cert_entry.domain_name))
                     session.add(cert_entry)
                     logger.debug('Added entry to database object in app (not committed yet)')
-                session.commit()
-                logger.debug('Committed all entries to database')
-                logger.debug('The master database is updated with {} records for {}'.format(len(domains), org_name))
+                    if export_outfile is not False:  # if -e or --export option is given
+                        logger.debug('Detected excel output. Appending dataframe as --export or -e given')
+                        temp_certsmaster_df = temp_certsmaster_df.append({
+                                                'issuer_ca_id': issuer_ca_id, 
+                                                'issuer_name': issuer_name,
+                                                'domain_name': domain_name.lower(), 
+                                                'crtsh_id': crtsh_id,
+                                                'entry_timestamp': entry_timestamp, 
+                                                'not_before': not_before,
+                                                'not_after': not_after, 
+                                                'search_tag': search_tag.strip()},
+                                                ignore_index=True)
+                        logger.debug('Temp dataframe appended')
             else:
                 logger.debug('identified {} domains from current cert entry...\n{}'.format(len(domains), domains))
             count += 1
+        logger.debug('Done looping through all certids and domains proceeding to commit changes to database..')
+        session.commit()
+        logger.debug('Committed all entries to database')
+        logger.debug('The master database is updated with {} records for {}'.format(len(domains), org_name))
+
+        if export_outfile is not False:
+            logger.debug('Passing dataframe to utilities function to generate excel')
+            file_name = export_outfile + ' - Domains Report'
+            logger.info('Exporting current org search results to the file "{}"'.format(file_name))
+            export_to_excel(dataframe=temp_certsmaster_df, outfile=file_name)
+
         logger.info('\nFinished all cert entries...\n')
         logger.info('identified {} domains from all cert entries...\n'.format(len(domains_list)))
         logger.debug('identified {} domains from all cert entries...\n{}'.format(len(domains_list), domains_list))

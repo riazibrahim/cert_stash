@@ -58,6 +58,7 @@ def get_cert_by_domain_name(domain, export_outfile):
                                          entry_timestamp=entry_timestamp.strip(), not_before=not_before.strip(),
                                          not_after=not_after.strip(), search_tag=search_tag.strip())
                 if export_outfile is not False:  # if -e or --export option is given
+                    #TODO: the name_value to be renamed to domain_name as there has been a change in database
                     logger.debug(
                         'Detected excel output. Appending dataframe as --export or -e given')
                     dataframe = dataframe.append({'issuer_ca_id': issuer_ca_id, 'issuer_name': issuer_name,
@@ -83,7 +84,7 @@ def get_cert_by_domain_name(domain, export_outfile):
             export_to_excel(dataframe=dataframe, outfile=export_outfile)
 
 # Extract the cert ids in json format by giving the organization name
-def get_cert_refs_by_org(org_name, output_type, export_outfile):
+def get_cert_ids_by_org(org_name, output_type, export_outfile):
     logger.debug('Getting cert.sh URL from config.py')
     base_url = Config.CERTSH_API_ORG_URL
     counter = 0
@@ -154,15 +155,16 @@ def get_cert_refs_by_org(org_name, output_type, export_outfile):
         logger.debug('The value of export_outfile is {}'.format(export_outfile))
         if export_outfile is not False:
             logger.debug('Passing dataframe to utilities function generate excel')
-            logger.info('Exporting current org search results to the file "{}"'.format(export_outfile))
-            export_to_excel(dataframe=dataframe, outfile=export_outfile)
+            file_name = export_outfile + ' - Certid Report'
+            logger.info('Exporting current org search results to the file "{}"'.format(file_name))
+            export_to_excel(dataframe=dataframe, outfile=file_name)
         return dataframe
     else:
         logger.info('Error! Did not recieve server response, please try again after sometime or check URL in config')
         sys.exit('Exiting!!')
 
 # Extract the domain names by scraping the crt.sh page for each cert id
-def get_domains_by_cert_ref(cert_ref_id):
+def get_domains_from_cert_ids(cert_ref_id):
     logger.debug('Entered "get_domains_by_cert_ref" function...')
     logger.debug('Getting domains from the certificate "{}"'.format(cert_ref_id))
     baseurl = Config.CERTSH_API_REQUEST_ID_URL
