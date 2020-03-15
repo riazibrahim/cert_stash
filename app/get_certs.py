@@ -2,7 +2,7 @@ import requests
 import json
 from app import engine, logger
 from app.models import CertsMaster, OrgsCertsRefsMaster
-from app.utilities import export_to_excel
+from app.utilities import export_to_excel, check_valid_domain_name
 from config import Config
 from sqlalchemy.orm import sessionmaker
 import pandas as pd
@@ -63,16 +63,15 @@ def get_cert_by_domain_name(domain, export_outfile):
                     logger.debug(
                         'Detected excel output. Appending dataframe as --export or -e given')
                     dataframe = dataframe.append({'issuer_ca_id': issuer_ca_id, 'issuer_name': issuer_name,
-                                                  'name_value': name_value.lower(), 'crtsh_id': crtsh_id,
+                                                  'domain_name': name_value.lower(), 'crtsh_id': crtsh_id,
                                                   'entry_timestamp': entry_timestamp, 'not_before': not_before,
                                                   'not_after': not_after, 'search_tag': search_tag.strip()},
                                                  ignore_index=True)
                     logger.debug('Dataframe appended')
                 logger.debug('Adding entry to database: {} - {}'.format(
-                    cert_entry.issuer_ca_id, cert_entry.name_value))
+                    cert_entry.issuer_ca_id, cert_entry.domain_name))
                 session.add(cert_entry)
-                logger.debug(
-                    'Added entry to database object in app (not committed yet)')
+                logger.debug('Added entry to database object in app (not committed yet)')
                 counter += 1
         session.commit()
         logger.debug('Committed all entries to database')

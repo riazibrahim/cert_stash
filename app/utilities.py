@@ -5,6 +5,7 @@ import os
 import dns.resolver
 from config import Config
 import sys
+import regex as re
 
 
 # Use pandas to connect to the database given in argument
@@ -58,7 +59,7 @@ def export_to_excel(dataframe, outfile):
         try:
             filename = 'outputs/{}.xlsx'.format(outfile)
             if os.path.exists(filename):
-                logger.debug('Output file already exists. Appending results')
+                logger.debug('Output file already exists. Appending results')  # TODO: Add to existing sheet, currently it is another sheet
                 with ExcelWriter(filename, mode='a') as writer:
                     dataframe.to_excel(writer)
                     logger.info('Added results to {}.xlsx in outputs folder\n'.format(outfile))
@@ -114,3 +115,14 @@ def resolve_domains(dataframe):
                                             'CNAME': cname_list}, ignore_index=True)
         logger.debug('Appended row to ns dataframe {}'.format(ns_dataframe['Domain Name']))
     return ns_dataframe
+
+
+def check_valid_domain_name(domain):
+    # ([\S]+[.][\S]+){1, }
+    pattern = re.compile('([\S]+[.][\S]+){1,}')
+    if pattern.match(domain.strip()):
+        logger.info('{} is a valid domain name'.format(domain.strip()))
+        return True
+    else:
+        logger.info('{} is not a valid domain name. Skipping...'.format(domain.strip()))
+        return False

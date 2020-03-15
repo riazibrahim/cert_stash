@@ -1,6 +1,6 @@
 from app import args, logger, engine, parser
-from app.utilities import export_db_to_excel, create_dataframe_from_sql, resolve_domains, export_to_excel
-from app.get_certs import get_cert_ids_by_org, parse_domains_and_update_certsmasterdb
+from app.utilities import export_db_to_excel, create_dataframe_from_sql, resolve_domains, export_to_excel, check_valid_domain_name
+from app.get_certs import get_cert_ids_by_org, parse_domains_and_update_certsmasterdb, get_cert_by_domain_name
 from app.filter import filter_domains
 from app.models import CertsMaster
 from datetime import datetime
@@ -61,7 +61,7 @@ if process is not None:
 # if the task is to update sqlite database with domain list or individual domain or export the contents of database
 else:  # The request is not to process but update databases from CRT.SH i.e. process arg not given
     if input_domain_flag is not False:
-        sys.exit('Not recommended, will be phased out soon! Sorry! \nExiting!!')
+        # sys.exit('Not recommended, will be phased out soon! Sorry! \nExiting!!')
         # TODO: check if valid domain names are given i.e. look for domain patterns in input and not just words
         if input_file is not None:
             logger.debug('Input file detected')
@@ -71,13 +71,15 @@ else:  # The request is not to process but update databases from CRT.SH i.e. pro
                 for item in file.readlines():
                     domain = item.rstrip()
                     logger.info('Processing client number {} : {}\n'.format(i, domain))
-                    get_cert_by_domain_name(domain=domain, export_outfile=export_outfile)
-                    i += 1
+                    if check_valid_domain_name(domain):
+                        get_cert_by_domain_name(domain=domain, export_outfile=export_outfile)
+                        i += 1
         if input_phrase is not None:
             logger.debug('Input domain detected')
             domain = input_phrase.rstrip()
             logger.info('Processing {}\n'.format(domain))
-            get_cert_by_domain_name(domain=domain, export_outfile=export_outfile)
+            if check_valid_domain_name(domain):
+                get_cert_by_domain_name(domain=domain, export_outfile=export_outfile)
 
         if export_all_outfile is not False:
             logger.debug('Export all option detected. Proceeding to export entire database into excel')
