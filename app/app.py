@@ -83,7 +83,7 @@ else:  # The request is not to process but update databases from CRT.SH i.e. pro
             export_db_to_excel(engine=engine, tablename='certsmaster', outfile=export_all_outfile,
                                search_tag=search_tag)
     if input_org_flag is not False:
-        if input_file is not None:
+        if input_file is not None: # TODO: Do the same CertsMaster database update as in input_phrase section
             logger.debug('Input file detected')
             with open(input_file, 'r') as file:
                 logger.debug('Opened input file {}'.format(input_file))
