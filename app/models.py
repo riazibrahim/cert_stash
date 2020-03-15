@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String
 from config import Config
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
 
 Base = declarative_base()
 
@@ -41,4 +42,4 @@ class OrgsCertsRefsMaster(Base):
 
     def __repr__(self):
         return 'This is the row id: {} , crtsh_id: {}, name_value: {}'.format(self.id, self.crtsh_id, self.name_value)
-
+    

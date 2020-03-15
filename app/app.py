@@ -2,8 +2,10 @@ from app import args, logger, engine, parser
 from app.utilities import export_db_to_excel, create_dataframe_from_sql, resolve_domains, export_to_excel
 from app.get_certs import get_cert_refs_by_org, get_cert_by_domain_name, get_domains_by_cert_ref
 from app.filter import filter_domains
+from app.models import CertsMaster
 from datetime import datetime
 import sys
+from sqlalchemy.orm import sessionmaker
 
 filename_prepend = datetime.now().strftime("%Y%m%d-%H%M%S")
 
@@ -98,7 +100,7 @@ else:  # The request is not to process but update databases from CRT.SH i.e. pro
             certs_ref_df = get_cert_refs_by_org(org_name=org_name, output_type='json', export_outfile=export_outfile)  # Returns a dataframe of output
             ''' 
                 certs_ref_df Dataframe format:
-                dataframe = pd.DataFrame(
+                certs_ref_df = pd.DataFrame(
                     columns=[
                         'issuer_ca_id', 
                         'issuer_name', 
@@ -119,23 +121,41 @@ else:  # The request is not to process but update databases from CRT.SH i.e. pro
         logger.info('Identified {} unique "crtsh ids" for resolving...\n'.format(len(uniq_certsh_id_list)))
         logger.info('Identified {} rows in certs_ref_df dataframe...\n'.format(certs_ref_df.shape[0]))
         if not len(uniq_certsh_id_list) == (certs_ref_df.shape[0]):
-            sys.exit('Error! Some issue unique crt sh ids are not same as certs_ref dataframe')
+            sys.exit('Error! Some issue count of unique crtsh ids are not same as number of rows in certs_ref dataframe')
         logger.info('Sanity check done, continuing ....\n')
         domains_list = []
         count = 1
+        logger.debug('Connecting to database')
+        DBSession = sessionmaker(bind=engine)
+        session = DBSession()
+        logger.debug('Session to database is established')
         for index, row in certs_ref_df.iterrows():
             crtsh_id = row['crtsh_id']
             logger.info('{}. Getting domains from the certificate "{}"'.format(count, crtsh_id))
             # TODO: Threading of these calls
-            domains = get_domains_by_cert_ref(crtsh_id)
+            domains = get_domains_by_cert_ref(crtsh_id) # Returns list of domains from the certsh html pages
             if len(domains) >0:
                 logger.debug('identified {} domains from current cert entry...\n{}'.format(len(domains), domains))
                 domains_list.extend(domains)
-                # TODO: Add the current domains list to the CertsMaster database, format as below:
-                '''cert_entry = CertsMaster(issuer_ca_id=issuer_ca_id, issuer_name=issuer_name.strip(),
-                                         domain_name=name_value.strip().lower(), crtsh_id=crtsh_id,
-                                         entry_timestamp=entry_timestamp.strip(), not_before=not_before.strip(),
-                                         not_after=not_after.strip(), search_tag=search_tag.strip())'''
+                for domain in domains:
+                    issuer_ca_id = row['issuer_ca_id']
+                    issuer_name = row['issuer_name']
+                    domain_name = str(domain).strip().lower()
+                    crtsh_id = row['crtsh_id']
+                    entry_timestamp = row['entry_timestamp'].strip()
+                    not_before = row['not_before'].strip()
+                    not_after = row['not_after'].strip()
+                    search_tag = row['search_tag'].strip()
+                    cert_entry = CertsMaster(issuer_ca_id=issuer_ca_id, issuer_name=issuer_name.strip(),
+                                             domain_name=domain_name.strip().lower(), crtsh_id=crtsh_id,
+                                             entry_timestamp=entry_timestamp.strip(), not_before=not_before.strip(),
+                                             not_after=not_after.strip(), search_tag=search_tag.strip())
+                    logger.debug('Adding entry to database: {} - {}'.format(cert_entry.issuer_ca_id, cert_entry.domain_name))
+                    session.add(cert_entry)
+                    logger.debug('Added entry to database object in app (not committed yet)')
+                session.commit()
+                logger.debug('Committed all entries to database')
+                logger.info('The master database is updated with {} records for {}'.format(len(domains), org_name))
             else:
                 logger.debug('identified {} domains from current cert entry...\n{}'.format(
                     len(domains), domains))
