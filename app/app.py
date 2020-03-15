@@ -62,7 +62,6 @@ if process is not None:
 else:  # The request is not to process but update databases from CRT.SH i.e. process arg not given
     if input_domain_flag is not False:
         # sys.exit('Not recommended, will be phased out soon! Sorry! \nExiting!!')
-        # TODO: check if valid domain names are given i.e. look for domain patterns in input and not just words
         if input_file is not None:
             logger.debug('Input file detected')
             with open(input_file, 'r') as file:
@@ -73,7 +72,7 @@ else:  # The request is not to process but update databases from CRT.SH i.e. pro
                     logger.info('Processing client number {} : {}\n'.format(i, domain))
                     if check_valid_domain_name(domain):
                         get_cert_by_domain_name(domain=domain, export_outfile=export_outfile)
-                        i += 1
+                    i += 1
         if input_phrase is not None:
             logger.debug('Input domain detected')
             domain = input_phrase.rstrip()
@@ -86,7 +85,7 @@ else:  # The request is not to process but update databases from CRT.SH i.e. pro
             export_db_to_excel(engine=engine, tablename='certsmaster', outfile=export_all_outfile,
                                search_tag=search_tag)
     if input_org_flag is not False:
-        if input_file is not None: # TODO: Do the same CertsMaster database update as in input_phrase section
+        if input_file is not None:
             logger.debug('Input file detected')
             with open(input_file, 'r') as file:
                 logger.debug('Opened input file {}'.format(input_file))
@@ -109,10 +108,10 @@ else:  # The request is not to process but update databases from CRT.SH i.e. pro
                                                    export_outfile=export_outfile,
                                                    org_name=org_name)
 
-    if export_all_outfile is not False:
-        logger.debug('Export all option detected. Proceeding to export entire database into excel')
-        export_db_to_excel(engine=engine, tablename='orgscertsrefsmaster', outfile=export_all_outfile,
-                            search_tag=search_tag)
+        if export_all_outfile is not False:
+            logger.debug('Export all option detected. Proceeding to export entire database into excel')
+            export_db_to_excel(engine=engine, tablename='orgscertsrefsmaster', outfile=export_all_outfile,
+                                search_tag=search_tag)
 
     # Print help if all arguments are none
     if input_file is None and export_all_outfile is False and input_phrase is None:

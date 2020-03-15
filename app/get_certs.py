@@ -59,7 +59,6 @@ def get_cert_by_domain_name(domain, export_outfile):
                                          entry_timestamp=entry_timestamp.strip(), not_before=not_before.strip(),
                                          not_after=not_after.strip(), search_tag=search_tag.strip())
                 if export_outfile is not False:  # if -e or --export option is given
-                    # TODO: the name_value to be renamed to domain_name as there has been a change in database
                     logger.debug(
                         'Detected excel output. Appending dataframe as --export or -e given')
                     dataframe = dataframe.append({'issuer_ca_id': issuer_ca_id, 'issuer_name': issuer_name,
@@ -79,9 +78,9 @@ def get_cert_by_domain_name(domain, export_outfile):
             counter, domain))
         #  if -e or --export option is given
         if export_outfile is not None:
-            logger.debug(
-                'Passing dataframe to utilities function generate excel')
-            export_to_excel(dataframe=dataframe, outfile=export_outfile)
+            logger.debug('Passing dataframe to utilities function generate excel')
+            file_name = export_outfile + ' - Domains Report'
+            export_to_excel(dataframe=dataframe, outfile=file_name)
 
 
 # Extract the cert ids in json format by giving the organization name
