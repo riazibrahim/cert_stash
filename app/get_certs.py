@@ -11,6 +11,7 @@ import lxml
 import regex as reg
 import sys
 
+
 # Get the cert ids from domain name. To be modified.
 def get_cert_by_domain_name(domain, export_outfile):
     logger.debug('Getting cert.sh URL from config.py')
@@ -58,7 +59,7 @@ def get_cert_by_domain_name(domain, export_outfile):
                                          entry_timestamp=entry_timestamp.strip(), not_before=not_before.strip(),
                                          not_after=not_after.strip(), search_tag=search_tag.strip())
                 if export_outfile is not False:  # if -e or --export option is given
-                    #TODO: the name_value to be renamed to domain_name as there has been a change in database
+                    # TODO: the name_value to be renamed to domain_name as there has been a change in database
                     logger.debug(
                         'Detected excel output. Appending dataframe as --export or -e given')
                     dataframe = dataframe.append({'issuer_ca_id': issuer_ca_id, 'issuer_name': issuer_name,
@@ -82,6 +83,7 @@ def get_cert_by_domain_name(domain, export_outfile):
             logger.debug(
                 'Passing dataframe to utilities function generate excel')
             export_to_excel(dataframe=dataframe, outfile=export_outfile)
+
 
 # Extract the cert ids in json format by giving the organization name
 def get_cert_ids_by_org(org_name, output_type, export_outfile):
@@ -136,10 +138,10 @@ def get_cert_ids_by_org(org_name, output_type, export_outfile):
                 logger.debug(
                     'Appending dataframe which needs to be used for updating CertsMaster')
                 dataframe = dataframe.append({'issuer_ca_id': issuer_ca_id, 'issuer_name': issuer_name,
-                                                'org_name': name_value.lower(), 'crtsh_id': crtsh_id,
-                                                'entry_timestamp': entry_timestamp, 'not_before': not_before,
-                                                'not_after': not_after, 'search_tag': search_tag.strip()},
-                                                ignore_index=True)
+                                              'org_name': name_value.lower(), 'crtsh_id': crtsh_id,
+                                              'entry_timestamp': entry_timestamp, 'not_before': not_before,
+                                              'not_after': not_after, 'search_tag': search_tag.strip()},
+                                             ignore_index=True)
                 logger.debug('Dataframe appended')
                 logger.debug('Adding entry to database: {} - {}'.format(
                     cert_refs_entry.issuer_ca_id, cert_refs_entry.org_name))
@@ -162,6 +164,7 @@ def get_cert_ids_by_org(org_name, output_type, export_outfile):
     else:
         logger.info('Error! Did not recieve server response, please try again after sometime or check URL in config')
         sys.exit('Exiting!!')
+
 
 # Extract the domain names by scraping the crt.sh page for each cert id
 def get_domains_from_cert_ids(cert_ref_id):
@@ -194,3 +197,95 @@ def get_domains_from_cert_ids(cert_ref_id):
             domain_list.append(domain.strip())
         # print('identifed commonName:{}'.format(domain))
     return domain_list
+
+
+def parse_domains_and_update_certsmasterdb(certs_ref_df, export_outfile, org_name):
+    # If Dataframe is empty, exit
+    if certs_ref_df.empty:
+        logger.info('No results returned.')
+        sys.exit('Exiting')
+
+    temp_certsmaster_df = pd.DataFrame(
+        columns=[
+            'issuer_ca_id',
+            'issuer_name',
+            'domain_name',
+            'crtsh_id',
+            'entry_timestamp',
+            'not_before',
+            'not_after',
+            'search_tag'])
+    # If Dataframe is not empty, first get the domains from the certs pages and update CertsMaster table
+    uniq_certsh_id_list = certs_ref_df['crtsh_id'].unique()
+    logger.info('Identified {} unique "crtsh ids" for resolving...\n'.format(len(uniq_certsh_id_list)))
+    logger.debug('Identified {} rows in certs_ref_df dataframe...\n'.format(certs_ref_df.shape[0]))
+    if not len(uniq_certsh_id_list) == (certs_ref_df.shape[0]):
+        sys.exit('Error! Some issue count of unique crtsh ids are not same as number of rows in certs_ref dataframe')
+    logger.info('Sanity check done, continuing ....\n')
+    domains_list = []
+    count = 1
+    logger.debug('Connecting to database')
+    DBSession = sessionmaker(bind=engine)
+    session = DBSession()
+    logger.debug('Session to database is established')
+    for index, row in certs_ref_df.iterrows():
+        crtsh_id = row['crtsh_id']
+        logger.info('{}. Getting domains from the certificate "{}"'.format(count, crtsh_id))
+        # TODO: Threading of these calls
+        domains = get_domains_from_cert_ids(crtsh_id)  # Returns list of domains from the certsh html pages
+        if len(domains) > 0:
+            logger.debug('identified {} domains from current cert entry...\n{}'.format(len(domains), domains))
+            domains_list.extend(domains)
+            for domain in domains:
+                issuer_ca_id = row['issuer_ca_id']
+                issuer_name = row['issuer_name']
+                domain_name = str(domain).strip().lower()
+                crtsh_id = row['crtsh_id']
+                entry_timestamp = row['entry_timestamp'].strip()
+                not_before = row['not_before'].strip()
+                not_after = row['not_after'].strip()
+                search_tag = row['search_tag'].strip()
+                cert_entry = CertsMaster(issuer_ca_id=issuer_ca_id, issuer_name=issuer_name.strip(),
+                                         domain_name=domain_name.strip().lower(), crtsh_id=crtsh_id,
+                                         entry_timestamp=entry_timestamp.strip(), not_before=not_before.strip(),
+                                         not_after=not_after.strip(), search_tag=search_tag.strip())
+                logger.debug(
+                    'Adding entry to database: {} - {}'.format(cert_entry.issuer_ca_id, cert_entry.domain_name))
+                session.add(cert_entry)
+                logger.debug('Added entry to database object in app (not committed yet)')
+                if export_outfile is not False:  # if -e or --export option is given
+                    logger.debug('Detected excel output. Appending dataframe as --export or -e given')
+                    temp_certsmaster_df = temp_certsmaster_df.append({
+                        'issuer_ca_id': issuer_ca_id,
+                        'issuer_name': issuer_name,
+                        'domain_name': domain_name.lower(),
+                        'crtsh_id': crtsh_id,
+                        'entry_timestamp': entry_timestamp,
+                        'not_before': not_before,
+                        'not_after': not_after,
+                        'search_tag': search_tag.strip()},
+                        ignore_index=True)
+                    logger.debug('Temp dataframe appended')
+        else:
+            logger.debug('identified {} domains from current cert entry...\n{}'.format(len(domains), domains))
+        count += 1
+    logger.debug('Done looping through all certids and domains proceeding to commit changes to database..')
+    session.commit()
+    logger.debug('Committed all entries to database')
+    logger.debug('The master database is updated with {} records for {}'.format(len(domains), org_name))
+
+    if export_outfile is not False:
+        logger.debug('Passing dataframe to utilities function to generate excel')
+        file_name = export_outfile + ' - Domains Report'
+        logger.info('Exporting current org search results to the file "{}"'.format(file_name))
+        export_to_excel(dataframe=temp_certsmaster_df, outfile=file_name)
+
+    logger.info('\nFinished all cert entries...\n')
+    logger.info('identified {} domains from all cert entries...\n'.format(len(domains_list)))
+    logger.debug('identified {} domains from all cert entries...\n{}'.format(len(domains_list), domains_list))
+    logger.debug('Removing duplicates...')
+    unique_domains_list = list(dict.fromkeys(domains_list))
+    logger.debug('There are {} unique domains from all cert entries...\n{}'.format(len(unique_domains_list),
+                                                                                   unique_domains_list))
+    logger.info('There are {} unique domains from all cert entries...\n'.format(len(unique_domains_list)))
+    logger.info('Refer the CertsMaster database for the extracted domains and cert ids!')

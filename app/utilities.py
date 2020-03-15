@@ -1,4 +1,5 @@
 import pandas as pd
+from pandas import ExcelWriter
 from app import logger, args
 import os
 import dns.resolver
@@ -48,10 +49,25 @@ def create_dataframe_from_sql(engine, tablename):
 def export_to_excel(dataframe, outfile):
     logger.debug('Checking if dataframe is None')
     if len(dataframe) > 0:  # Check if dataframe has any data in it
-        if not os.path.exists('outputs'):
-            os.mkdir('outputs')
-        dataframe.to_excel('outputs/{}.xlsx'.format(outfile))
-        logger.info('Generated {}.xlsx in outputs folder\n'.format(outfile))
+        try:
+            if not os.path.exists('outputs'):
+                os.mkdir('outputs')
+        except:
+            logger.debug('Error creating outputs directory. Please check permissions.')
+            sys.exit('Error creating outputs directory. Please check permissions.')
+        try:
+            filename = 'outputs/{}.xlsx'.format(outfile)
+            if os.path.exists(filename):
+                logger.debug('Output file already exists. Appending results')
+                with ExcelWriter(filename, mode='a') as writer:
+                    dataframe.to_excel(writer)
+                    logger.info('Added results to {}.xlsx in outputs folder\n'.format(outfile))
+            else:
+                dataframe.to_excel('outputs/{}.xlsx'.format(outfile))
+                logger.info('Generated {}.xlsx in outputs folder\n'.format(outfile))
+        except:
+            logger.debug('Error creating outputs directory. Please check permissions.')
+            sys.exit('Error creating outputs directory. Please check permissions.')
 
 
 # Resolved the domains in the dataframe and returns the results in another dataframe
