@@ -4,6 +4,7 @@ A tool for downloading certificate log data from cert.sh, parse it based on doma
 
 Feel free to hit me up with suggestions.
 
+
 ### Installing
 
 
@@ -37,17 +38,25 @@ pip install -r requirements.txt
 
 ##### Usage 1: To obtain certs of a single domain:
 ```
-python cert_stash.py -d/ --domain digg.com
+python cert_stash.py -d/--domain -i/--input digg.com
 ```
-##### Usage 2: To obtain certs of domains list in a file
+##### Usage 2: To obtain certs of a single organisation name:
 ```
-python cert_stash.py -f/ --file domain.lst
+python cert_stash.py -o/--org -i/--input digg.com
 ```
-##### Usage 3: To output current results to an excel sheet
+##### Usage 3: To obtain certs of domains list in a file (will skip entries if domains are not in right format)
+```
+python cert_stash.py -d/--domain -f/--file <domain.lst>
+```
+##### Usage 4: To obtain certs of organisation names list in a file
+```
+python cert_stash.py -o/--org -f/--file <orgs.lst>
+```
+##### Usage 5: To output current results to an excel sheet
 ```
 python cert_stash.py -d <domain_name> -e/ --export
 ```
-##### Usage 4: To output entire local sqlite database (i.e. results of all previous and/ or current searches) with all historic search results to an excel sheet (can be used without any other argument)
+##### Usage 6: To output entire local sqlite database (i.e. results of all previous and/ or current searches) with all historic search results to an excel sheet (can be used without any other argument)
 ```
 python cert_stash.py -eA/ --export_all 
 
@@ -55,11 +64,11 @@ or
 
 python cert_stash.py -d <domain_name> -eA/ --export_all
 ```
-##### Usage 5: Export only results pertaining to specific previous searches (all queries gets saved as search tag in database)
+##### Usage 7: Export only results pertaining to specific previous searches (all queries gets saved as search tag in database)
 ```
 python cert_stash.py -eA --tag <search tag>
 ```
-##### Usage 6: Process domains/ subdomains in database to resolve IP and CNAME. Also produces 3 files which splits the records into external domain, internal domain and others
+##### Usage 8: Process domains/ subdomains in database to resolve IP and CNAME. Also produces 3 files which splits the records into external domain, internal domain and others
 ```
 python cert_stash.py --process filter -if <internal_tlds>.lst -ef <external_tlds>.lst --tag <previous_search>(optional) 
 
