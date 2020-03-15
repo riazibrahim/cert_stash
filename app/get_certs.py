@@ -11,7 +11,7 @@ import lxml
 import regex as reg
 import sys
 
-
+# Get the cert ids from domain name. To be modified.
 def get_cert_by_domain_name(domain, export_outfile):
     logger.debug('Getting cert.sh URL from config.py')
     base_url = Config.CERTSH_API_URL
@@ -82,7 +82,7 @@ def get_cert_by_domain_name(domain, export_outfile):
                 'Passing dataframe to utilities function generate excel')
             export_to_excel(dataframe=dataframe, outfile=export_outfile)
 
-
+# Extract the cert ids in json format by giving the organization name
 def get_cert_refs_by_org(org_name, output_type, export_outfile):
     logger.debug('Getting cert.sh URL from config.py')
     base_url = Config.CERTSH_API_ORG_URL
@@ -151,16 +151,17 @@ def get_cert_refs_by_org(org_name, output_type, export_outfile):
         logger.info('The master database is updated with {} records for {}'.format(
             counter, org_name))
         #  if -e or --export option is given
-        if export_outfile is not None:
-            logger.debug(
-                'Passing dataframe to utilities function generate excel')
+        logger.debug('The value of export_outfile is {}'.format(export_outfile))
+        if export_outfile is not False:
+            logger.debug('Passing dataframe to utilities function generate excel')
+            logger.info('Exporting current org search results to the file "{}"'.format(export_outfile))
             export_to_excel(dataframe=dataframe, outfile=export_outfile)
         return dataframe
     else:
-        logger.info('Error! Did not recieve server response, please check URL')
+        logger.info('Error! Did not recieve server response, please try again after sometime or check URL in config')
         sys.exit('Exiting!!')
 
-
+# Extract the domain names by scraping the crt.sh page for each cert id
 def get_domains_by_cert_ref(cert_ref_id):
     logger.debug('Entered "get_domains_by_cert_ref" function...')
     logger.debug('Getting domains from the certificate "{}"'.format(cert_ref_id))
