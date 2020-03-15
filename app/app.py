@@ -188,10 +188,10 @@ else:  # The request is not to process but update databases from CRT.SH i.e. pro
         logger.info('There are {} unique domains from all cert entries...\n'.format(len(unique_domains_list)))
         logger.info('Refer the CertsMaster database for the extracted domains and cert ids!')
 # TODO: Export the domains result, currently on the org table with cert is exported
-        if export_all_outfile is not False:
-            logger.debug('Export all option detected. Proceeding to export entire database into excel')
-            export_db_to_excel(engine=engine, tablename='orgscertsrefsmaster', outfile=export_all_outfile,
-                               search_tag=search_tag)
+    if export_all_outfile is not False:
+        logger.debug('Export all option detected. Proceeding to export entire database into excel')
+        export_db_to_excel(engine=engine, tablename='orgscertsrefsmaster', outfile=export_all_outfile,
+                            search_tag=search_tag)
 
     # Print help if all arguments are none
     if input_file is None and export_all_outfile is False and input_phrase is None:
