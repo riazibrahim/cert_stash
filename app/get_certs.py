@@ -14,6 +14,7 @@ import sys
 
 # Get the cert ids from domain name. To be modified.
 def get_cert_by_domain_name(domain, export_outfile):
+    logger.debug('Entered :: get_cert_by_domain_name')
     logger.debug('Getting cert.sh URL from config.py')
     base_url = Config.CERTSH_API_URL
     counter = 0
@@ -44,6 +45,7 @@ def get_cert_by_domain_name(domain, export_outfile):
         DBSession = sessionmaker(bind=engine)
         session = DBSession()
         logger.debug('Session to database is established')
+        search_tag = domain.strip()
         for cert in certs:
             issuer_ca_id = cert['issuer_ca_id']
             issuer_name = cert['issuer_name']
@@ -77,14 +79,15 @@ def get_cert_by_domain_name(domain, export_outfile):
         logger.info('The master database is updated with {} records for {}'.format(
             counter, domain))
         #  if -e or --export option is given
-        if export_outfile is not None:
-            logger.debug('Passing dataframe to utilities function generate excel')
-            file_name = export_outfile + ' - Domains Report'
-            export_to_excel(dataframe=dataframe, outfile=file_name)
+        # if export_outfile is not None:
+        #     logger.debug('Passing dataframe to utilities function generate excel')
+        #     file_name = export_outfile + ' - Domains Report'
+        #     export_to_excel(dataframe=dataframe, outfile=file_name, sheet_name=search_tag.strip())
 
 
 # Extract the cert ids in json format by giving the organization name
 def get_cert_ids_by_org(org_name, output_type, export_outfile):
+    logger.debug('Entered :: get_cert_ids_by_org')
     logger.debug('Getting cert.sh URL from config.py')
     base_url = Config.CERTSH_API_ORG_URL
     counter = 0
@@ -157,7 +160,7 @@ def get_cert_ids_by_org(org_name, output_type, export_outfile):
             logger.debug('Passing dataframe to utilities function generate excel')
             file_name = export_outfile + ' - Certid Report'
             logger.info('Exporting current org search results to the file "{}"'.format(file_name))
-            export_to_excel(dataframe=dataframe, outfile=file_name)
+            export_to_excel(dataframe=dataframe, outfile=file_name, sheet_name=search_tag.strip())
         return dataframe
     else:
         logger.info('Error! Did not recieve server response, please try again after sometime or check URL in config')
@@ -166,7 +169,7 @@ def get_cert_ids_by_org(org_name, output_type, export_outfile):
 
 # Extract the domain names by scraping the crt.sh page for each cert id
 def get_domains_from_cert_ids(cert_ref_id):
-    logger.debug('Entered "get_domains_by_cert_ref" function...')
+    logger.debug('Entered :: get_domains_from_cert_ids')
     logger.debug('Getting domains from the certificate "{}"'.format(cert_ref_id))
     baseurl = Config.CERTSH_API_REQUEST_ID_URL
     # https://crt.sh/?id=2574327583
@@ -198,6 +201,7 @@ def get_domains_from_cert_ids(cert_ref_id):
 
 
 def parse_domains_and_update_certsmasterdb(certs_ref_df, export_outfile, org_name):
+    logger.debug('Entered :: parse_domains_and_update_certsmasterdb')
     # If Dataframe is empty, exit
     if certs_ref_df.empty:
         logger.info('No results returned.')

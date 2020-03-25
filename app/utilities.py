@@ -9,8 +9,8 @@ import regex as re
 
 
 # Use pandas to connect to the database given in argument
-# TODO: Put sheet names in case this is called inside a loop
 def export_db_to_excel(engine, tablename, outfile, **kwargs):
+    logger.debug('Entered :: export_db_to_excel')
     search_tag = kwargs.get('search_tag', None)
     if search_tag is not None:
         logger.info('Exporting results for search tag :"{}"'.format(search_tag))
@@ -42,13 +42,20 @@ def export_db_to_excel(engine, tablename, outfile, **kwargs):
 
 
 def create_dataframe_from_sql(engine, tablename):
+    logger.debug('Entered :: create_dataframe_from_sql')
     logger.debug('Reading {} table from database {} into pandas dataframe'.format(tablename, engine))
     db_dataframe = pd.read_sql_table(table_name=tablename, con=engine)
     logger.debug('Read to dataframe from database into pandas')
     return db_dataframe
 
 
-def export_to_excel(dataframe, outfile):
+# TODO: Put sheet names in case this is called inside a loop
+def export_to_excel(dataframe, outfile, **kwargs):
+    logger.debug('Entered :: export_to_excel')
+    logger.debug('Check if sheet_name is given')
+    sheet_name = kwargs.get('sheet_name', None)
+    logger.debug('Check if sheet_name is given')
+
     logger.debug('Checking if dataframe is None')
     if len(dataframe) > 0:  # Check if dataframe has any data in it
         try:
@@ -60,12 +67,19 @@ def export_to_excel(dataframe, outfile):
         try:
             filename = 'outputs/{}.xlsx'.format(outfile)
             if os.path.exists(filename):
-                logger.debug('Output file already exists. Appending results')  # TODO: Add to existing sheet, currently it is another sheet
+                logger.debug(
+                    'Output file already exists. Appending results')  # TODO: Add to existing sheet, currently it is another sheet
                 with ExcelWriter(filename, mode='a') as writer:
-                    dataframe.to_excel(writer)
+                    if sheet_name is not None:
+                        dataframe.to_excel(writer, sheet_name=sheet_name)
+                    else:
+                        dataframe.to_excel(writer)
                     logger.info('Added results to {}.xlsx in outputs folder\n'.format(outfile))
             else:
-                dataframe.to_excel('outputs/{}.xlsx'.format(outfile))
+                if sheet_name is not None:
+                    dataframe.to_excel('outputs/{}.xlsx'.format(outfile), sheet_name=sheet_name)
+                else:
+                    dataframe.to_excel('outputs/{}.xlsx'.format(outfile))
                 logger.info('Generated {}.xlsx in outputs folder\n'.format(outfile))
         except:
             logger.debug('Error creating outputs directory. Please check permissions.')
@@ -75,6 +89,7 @@ def export_to_excel(dataframe, outfile):
 # Resolved the domains in the dataframe and returns the results in another dataframe
 def resolve_domains(dataframe):
     # initiate nameservers for dns resolver
+    logger.debug('Entered :: resolve_domains')
     logger.debug('Initiating resolver object from dnspython')
     ns_resolver = dns.resolver.Resolver(configure=False)
     logger.debug('Setting names servers as in the Config')
@@ -119,6 +134,7 @@ def resolve_domains(dataframe):
 
 
 def check_valid_domain_name(domain):
+    logger.debug('Entered :: check_valid_domain_name')
     # ([\S]+[.][\S]+){1, }
     pattern = re.compile('([\S]+[.][\S]+){1,}')
     if pattern.match(domain.strip()):
