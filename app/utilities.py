@@ -9,6 +9,7 @@ import regex as re
 
 
 # Use pandas to connect to the database given in argument
+# TODO: Put sheet names in case this is called inside a loop
 def export_db_to_excel(engine, tablename, outfile, **kwargs):
     search_tag = kwargs.get('search_tag', None)
     if search_tag is not None:
