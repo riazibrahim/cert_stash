@@ -142,3 +142,5 @@ dmypy.json
 outputs/
 backups/
 *.sh
+.vscode/
+.idea/
