@@ -280,7 +280,7 @@ def parse_domains_and_update_certsmasterdb(certs_ref_df, export_outfile, org_nam
         logger.debug('Passing dataframe to utilities function to generate excel')
         file_name = export_outfile + ' - Domains Report'
         logger.info('Exporting current org search results to the file "{}"'.format(file_name))
-        export_to_excel(dataframe=temp_certsmaster_df, outfile=file_name)
+        export_to_excel(dataframe=temp_certsmaster_df, outfile=file_name, sheet_name=org_name.strip())
 
     logger.info('\nFinished all cert entries...\n')
     logger.info('identified {} domains from all cert entries...\n'.format(len(domains_list)))
