@@ -25,6 +25,8 @@ class CertsMaster(Base):
     def __repr__(self):
         return 'This is the row id: {} , crtsh_id: {}, name_value: {}'.format(self.id, self.crtsh_id, self.name_value)
 
+
+# table for storing interim cert id data when organization name is given. This table is later used to find out domains per cert id and update master
 class OrgsCertsRefsMaster(Base):
     """Data model example."""
     __tablename__ = 'orgscertsrefsmaster'
@@ -42,4 +44,3 @@ class OrgsCertsRefsMaster(Base):
 
     def __repr__(self):
         return 'This is the row id: {} , crtsh_id: {}, name_value: {}'.format(self.id, self.crtsh_id, self.name_value)
-    
