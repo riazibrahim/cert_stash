@@ -79,10 +79,10 @@ def get_cert_by_domain_name(domain, export_outfile):
         logger.info('The master database is updated with {} records for {}'.format(
             counter, domain))
         #  if -e or --export option is given
-        # if export_outfile is not None:
-        #     logger.debug('Passing dataframe to utilities function generate excel')
-        #     file_name = export_outfile + ' - Domains Report'
-        #     export_to_excel(dataframe=dataframe, outfile=file_name, sheet_name=search_tag.strip())
+        if export_outfile is not None:
+            logger.debug('Passing dataframe to utilities function generate excel')
+            file_name = export_outfile + ' - Domains Report'
+            export_to_excel(dataframe=dataframe, outfile=file_name, sheet_name=search_tag.strip())
 
 
 # Extract the cert ids in json format by giving the organization name
