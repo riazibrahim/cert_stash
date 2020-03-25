@@ -16,22 +16,22 @@ group_input_mode.add_argument('-f', '--file',
                               type=str,
                               help='Give input filename',
                               required=False)
-group_input_mode.add_argument('-i', '--input',
-                              dest='input',
-                              type=str,
-                              help='Give input phrase i.e. org name or domain name',
-                              required=False)
 group_org_or_domain = parser.add_mutually_exclusive_group(required=False)
 group_org_or_domain.add_argument('-d', '--domain',
                                  dest='domain',
                                  action='store_true',
-                                 help='Indicate if input given is domain name. WARNING! NOT RECOMMENDED, Give -o/--org instead with organization names as input',
+                                 help='Indicate if input given in -i or -f is/ are domain name. WARNING! NOT RECOMMENDED, Give -o/--org instead with organization names as input',
                                  required=False)
 group_org_or_domain.add_argument('-o', '--org',
                                  dest='org',
                                  action='store_true',
-                                 help='Indicate if input given is organization name',
+                                 help='Indicate if input given in -i or -f is/ are organization name',
                                  required=False)
+group_input_mode.add_argument('-i', '--input',
+                              dest='input',
+                              type=str,
+                              help='Give input phrase i.e. org name or domain name depending on the options -d or -o',
+                              required=False)
 parser.add_argument('-eA', '--export_all',
                     dest='export_all_outfile',
                     action='store_true',

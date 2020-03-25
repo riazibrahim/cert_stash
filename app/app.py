@@ -109,9 +109,13 @@ else:  # The request is not to process but update databases from CRT.SH i.e. pro
                                                    org_name=org_name)
 
         if export_all_outfile is not False:
-            logger.debug('Export all option detected. Proceeding to export entire database into excel')
-            export_db_to_excel(engine=engine, tablename='orgscertsrefsmaster', outfile=export_all_outfile,
+            logger.debug('Export all option detected. Proceeding to export entire certsmaster table in database into excel')
+            export_db_to_excel(engine=engine, tablename='certsmaster', outfile=export_all_outfile,
                                 search_tag=search_tag)
+    # i.e. if only -eA is given as option
+    if export_all_outfile is not False:
+        logger.debug('Export all option detected. Proceeding to export entire certsmaster table in database into excel')
+        export_db_to_excel(engine=engine, tablename='certsmaster', outfile=export_all_outfile)
 
     # Print help if all arguments are none
     if input_file is None and export_all_outfile is False and input_phrase is None:

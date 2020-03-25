@@ -139,3 +139,4 @@ dmypy.json
 *.bkp*
 *.lst
 outputs/
+backups/
