@@ -69,7 +69,9 @@ else:  # The request is not to process but update databases from CRT.SH i.e. pro
                 i = 1
                 for item in file.readlines():
                     domain = item.rstrip()
-                    logger.info('Processing client number {} : {}\n'.format(i, domain))
+                    logger.info('\n************************************************************\n'
+                                'Processing client number {} : {}\n'
+                                '************************************************************\n'.format(i, domain))
                     if check_valid_domain_name(domain):
                         get_cert_by_domain_name(domain=domain, export_outfile=export_outfile)
                     i += 1
@@ -92,7 +94,9 @@ else:  # The request is not to process but update databases from CRT.SH i.e. pro
                 i = 1
                 for item in file.readlines():
                     org_name = item.rstrip()
-                    logger.info('Processing client number {} : {}\n'.format(i, org_name))
+                    logger.info('\n\n************************************************************\n'
+                                'Processing client number {} : {}\n'
+                                '************************************************************\n'.format(i, org_name))
                     certs_ref_df = get_cert_ids_by_org(org_name=org_name, output_type='json', export_outfile=export_outfile)
                     parse_domains_and_update_certsmasterdb(certs_ref_df=certs_ref_df, export_outfile=export_outfile, org_name=org_name)
                     i += 1
