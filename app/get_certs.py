@@ -7,9 +7,9 @@ from config import Config
 from sqlalchemy.orm import sessionmaker
 import pandas as pd
 from bs4 import BeautifulSoup
-import lxml
 import regex as reg
 import sys
+import concurrent.futures
 
 
 # Get the cert ids from domain name. To be modified.
@@ -172,8 +172,6 @@ def get_domains_from_cert_ids(cert_ref_id):
     logger.debug('Entered :: get_domains_from_cert_ids')
     logger.debug('Getting domains from the certificate "{}"'.format(cert_ref_id))
     baseurl = Config.CERTSH_API_REQUEST_ID_URL
-    # https://crt.sh/?id=2574327583
-    # id = '2526431183'
     id = str(cert_ref_id).strip()
     output_format = 'html'  # Hard coded
     curr_cert_url = baseurl.format(id, output_format)
@@ -234,7 +232,15 @@ def parse_domains_and_update_certsmasterdb(certs_ref_df, export_outfile, org_nam
         crtsh_id = row['crtsh_id']
         logger.info('{}. Getting domains from the certificate "{}"'.format(count, crtsh_id))
         # TODO: Threading of these calls
-        domains = get_domains_from_cert_ids(crtsh_id)  # Returns list of domains from the certsh html pages
+        logger.info('[+] Threading initiated ....')
+        # domains = get_domains_from_cert_ids(crtsh_id)  # Returns list of domains from the certsh html pages
+        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+            future = executor.submit(get_domains_from_cert_ids, crtsh_id)
+            try:
+                domains = future.result()
+            except Exception as exc:
+                print('%r generated an exception: %s' % (exc))
+        logger.info('[-] Threading completed ....\n domains list is {}'.format(domains))
         if len(domains) > 0:
             logger.debug('identified {} domains from current cert entry...\n{}'.format(len(domains), domains))
             domains_list.extend(domains)
