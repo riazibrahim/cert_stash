@@ -9,7 +9,7 @@ import pandas as pd
 from bs4 import BeautifulSoup
 import regex as reg
 import sys
-import concurrent.futures
+from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 
 
 # Get the cert ids from domain name. To be modified.
@@ -232,15 +232,7 @@ def parse_domains_and_update_certsmasterdb(certs_ref_df, export_outfile, org_nam
         crtsh_id = row['crtsh_id']
         logger.info('{}. Getting domains from the certificate "{}"'.format(count, crtsh_id))
         # TODO: Threading of these calls
-        logger.info('[+] Threading initiated ....')
-        # domains = get_domains_from_cert_ids(crtsh_id)  # Returns list of domains from the certsh html pages
-        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-            future = executor.submit(get_domains_from_cert_ids, crtsh_id)
-            try:
-                domains = future.result()
-            except Exception as exc:
-                print('%r generated an exception: %s' % (exc))
-        logger.info('[-] Threading completed ....\n domains list is {}'.format(domains))
+        domains = get_domains_from_cert_ids(crtsh_id)  # Returns list of domains from the certsh html pages
         if len(domains) > 0:
             logger.debug('identified {} domains from current cert entry...\n{}'.format(len(domains), domains))
             domains_list.extend(domains)
