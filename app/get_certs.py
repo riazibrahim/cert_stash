@@ -10,10 +10,12 @@ from bs4 import BeautifulSoup
 import regex as reg
 import sys
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
+from app.globalvars import filename_prepend, input_file, input_phrase, input_domain_flag, input_org_flag, \
+    export_all_outfile, export_outfile, process, search_tag, internal_tld_file, external_tld_file, output_type
 
 
 # Get the cert ids from domain name. To be modified.
-def get_cert_by_domain_name(domain, export_outfile):
+def get_cert_by_domain_name(domain):
     logger.debug('Entered :: get_cert_by_domain_name')
     logger.debug('Getting cert.sh URL from config.py')
     base_url = Config.CERTSH_API_URL
@@ -86,7 +88,7 @@ def get_cert_by_domain_name(domain, export_outfile):
 
 
 # Extract the cert ids in json format by giving the organization name
-def get_cert_ids_by_org(org_name, output_type, export_outfile):
+def get_cert_ids_by_org(org_name):
     logger.debug('Entered :: get_cert_ids_by_org')
     logger.debug('Getting cert.sh URL from config.py')
     base_url = Config.CERTSH_API_ORG_URL
@@ -198,7 +200,7 @@ def get_domains_from_cert_ids(cert_ref_id):
     return domain_list
 
 
-def parse_domains_and_update_certsmasterdb(certs_ref_df, export_outfile, org_name):
+def parse_domains_and_update_certsmasterdb(certs_ref_df, org_name):
     logger.debug('Entered :: parse_domains_and_update_certsmasterdb')
     # If Dataframe is empty, exit
     if certs_ref_df.empty:

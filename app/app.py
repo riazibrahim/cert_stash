@@ -1,32 +1,11 @@
-from app import args, logger, engine, parser
-from app.utilities import export_db_to_excel, create_dataframe_from_sql, resolve_domains, export_to_excel, check_valid_domain_name
+from app import logger, engine, parser
+from app.utilities import export_db_to_excel, create_dataframe_from_sql, resolve_domains, export_to_excel, \
+    check_valid_domain_name
 from app.get_certs import get_cert_ids_by_org, parse_domains_and_update_certsmasterdb, get_cert_by_domain_name
 from app.filter import filter_domains
-from app.models import CertsMaster
-from datetime import datetime
 import sys
-from sqlalchemy.orm import sessionmaker
-import pandas as pd
-
-filename_prepend = datetime.now().strftime("%Y%m%d-%H%M%S")
-
-# Gather all arguments
-logger.debug('Obtaining all arguments')
-input_file = args.file
-input_phrase = args.input
-input_domain_flag = args.domain  # True or false
-input_org_flag = args.org  # True or false
-export_all_outfile = args.export_all_outfile
-if export_all_outfile is not False:  # Create file naming if export_all option is present
-    export_all_outfile = '{} - Export Master DB'.format(filename_prepend)
-    # search_tag = args.search_tag  # Get the search tag if the option is given in conjunction with -eA
-export_outfile = args.export_outfile
-if export_outfile is not False:  # Create file naming if export option is present
-    export_outfile = '{} - Export Current Query'.format(filename_prepend)
-process = args.process
-search_tag = args.search_tag
-internal_tld_file = args.itld
-external_tld_file = args.etld
+from app.globalvars import filename_prepend, input_file, input_phrase, input_domain_flag, input_org_flag, \
+    export_all_outfile, export_outfile, process, search_tag, internal_tld_file, external_tld_file, output_type
 
 # if the task is to process domains stored in the sqlite database
 if process is not None:
@@ -45,7 +24,7 @@ if process is not None:
             logger.debug('Passing dataframe to filter_domains\n')
             external_tld_df = filter_domains(internal_tld_file=internal_tld_file, external_tld_file=external_tld_file,
                                              dataframe=selected_dataframe)
-    else: # original dataframe containing all rows goes for processing
+    else:  # original dataframe containing all rows goes for processing
         # once dataframe is created from Sqlite database, send it as input to filter_domain to do filtering and get only
         # external TLDs
         logger.info('Processing all data from backend database\n')
@@ -73,14 +52,14 @@ else:  # The request is not to process but update databases from CRT.SH i.e. pro
                                 'Processing client number {} : {}\n'
                                 '************************************************************\n'.format(i, domain))
                     if check_valid_domain_name(domain):
-                        get_cert_by_domain_name(domain=domain, export_outfile=export_outfile)
+                        get_cert_by_domain_name(domain=domain)
                     i += 1
         if input_phrase is not None:
             logger.debug('Input domain detected')
             domain = input_phrase.rstrip()
             logger.info('Processing {}\n'.format(domain))
             if check_valid_domain_name(domain):
-                get_cert_by_domain_name(domain=domain, export_outfile=export_outfile)
+                get_cert_by_domain_name(domain=domain)
 
         if export_all_outfile is not False:
             logger.debug('Export all option detected. Proceeding to export entire database into excel')
@@ -97,25 +76,22 @@ else:  # The request is not to process but update databases from CRT.SH i.e. pro
                     logger.info('\n\n************************************************************\n'
                                 'Processing client number {} : {}\n'
                                 '************************************************************\n'.format(i, org_name))
-                    certs_ref_df = get_cert_ids_by_org(org_name=org_name, output_type='json', export_outfile=export_outfile)
-                    parse_domains_and_update_certsmasterdb(certs_ref_df=certs_ref_df, export_outfile=export_outfile, org_name=org_name)
+                    certs_ref_df = get_cert_ids_by_org(org_name=org_name)
+                    parse_domains_and_update_certsmasterdb(certs_ref_df=certs_ref_df, org_name=org_name)
                     i += 1
         if input_phrase is not None:
             logger.debug('Input domain detected')
             org_name = input_phrase.rstrip()
             logger.info('Processing {}\n'.format(org_name))
-            certs_ref_df = get_cert_ids_by_org(org_name=org_name,
-                                               output_type='json',
-                                               export_outfile=export_outfile)  # Returns a dataframe of output
+            certs_ref_df = get_cert_ids_by_org(org_name=org_name)  # Returns a dataframe of output
 
-            parse_domains_and_update_certsmasterdb(certs_ref_df=certs_ref_df,
-                                                   export_outfile=export_outfile,
-                                                   org_name=org_name)
+            parse_domains_and_update_certsmasterdb(certs_ref_df=certs_ref_df, org_name=org_name)
 
         if export_all_outfile is not False:
-            logger.debug('Export all option detected. Proceeding to export entire certsmaster table in database into excel')
+            logger.debug(
+                'Export all option detected. Proceeding to export entire certsmaster table in database into excel')
             export_db_to_excel(engine=engine, tablename='certsmaster', outfile=export_all_outfile,
-                                search_tag=search_tag)
+                               search_tag=search_tag)
     # i.e. if only -eA is given as option
     if export_all_outfile is not False:
         logger.debug('Export all option detected. Proceeding to export entire certsmaster table in database into excel')
