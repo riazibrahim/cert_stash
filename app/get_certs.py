@@ -2,7 +2,7 @@ import requests
 import json
 from app import engine, logger
 from app.models import CertsMaster, OrgsCertsRefsMaster
-from app.utilities import export_to_excel, check_valid_domain_name, get_proxies
+from app.utilities import export_to_excel, check_valid_domain_name, get_proxies, get_tor_session
 from config import Config
 from sqlalchemy.orm import sessionmaker
 import pandas as pd
@@ -210,18 +210,11 @@ def get_domains_from_cert_ids(cert_ref_id):
 def fetch_url(url):
     logger.debug('Entered fetch_url')
     proxy_index = random.randint(0, len(proxies) - 1)
-    # proxy = {'http': proxies[proxy_index], 'https': proxies[proxy_index]}
     proxy = {'https': proxies[proxy_index]}
     logger.debug('Selected proxy {}\n'.format(proxy))
     try:
         user_agent = random.choice(Config.USER_AGENT_LIST)
         headers = {'User-Agent': user_agent}
-        # request = urllib.request.Request(url, headers=headers)
-        # proxy = random.choice(Config.PROXY_LIST)
-        # logger.info('Proxy : {}\n'.format(proxy))
-        # logger.debug('Proxy used: {}'.format(proxy_ip))
-        # request.set_proxy(proxy_ip, 'https')
-        # response = requests.get(url=url, headers=headers, proxies={"http": proxy, "https": proxy})
         response = requests.get(url=url, headers=headers, proxies=proxy)
         logger.debug('request header {}'.format(response.request.headers))
         logger.debug('User agent used is {}\n'.format(user_agent))
@@ -230,18 +223,34 @@ def fetch_url(url):
         return url, None, e, proxy
 
 
+def fetch_url_tor(url):
+    logger.debug('Entered fetch_url_tor')
+    session = get_tor_session()
+    ip = session.get("http://icanhazip.com").text
+    logger.debug('Obtained tor ip {}\n'.format(ip))
+    try:
+        user_agent = random.choice(Config.USER_AGENT_LIST)
+        headers = {'User-Agent': user_agent}
+        response = session.get(url=url, headers=headers)
+        logger.debug('request header {}'.format(response.request.headers))
+        logger.debug('User agent used is {}\n'.format(user_agent))
+        return url, response.content, None, ip
+    except Exception as e:
+        return url, None, e, ip
+
+
 def get_response_from_crtsh_urls(crtsh_url_list):
     logger.info('Entered "get_response_via_crtsh_id"\n')
     logger.info('The list of URLs for threading is :{}\n'.format(crtsh_url_list))
     crtsh_response_list = []
     start_time = timer()
-    results = ThreadPool(Config.THREAD_COUNT).imap_unordered(fetch_url, crtsh_url_list)
-    for url, html, error, proxy in results:
+    results = ThreadPool(Config.THREAD_COUNT).imap_unordered(fetch_url_tor, crtsh_url_list)
+    for url, html, error, ip in results:
         if error is None:
-            logger.info("%r fetched in %ss -- proxy used: %s" % (url, timer() - start_time, proxy))
+            logger.info("%r fetched in %ss -- ip used: %s" % (url, timer() - start_time, ip))
             crtsh_response_list.append(html)
         else:
-            logger.info("error fetching %r: %s : proxy used %s" % (url, error, proxy))
+            logger.info("error fetching %r: %s : ip used %s" % (url, error, ip))
     logger.info("Elapsed Time: %s" % (timer() - start_time))
     # logger.info('Starting threading at {}'.format(start_time))
     # with ThreadPoolExecutor(Config.THREAD_COUNT) as executor:
