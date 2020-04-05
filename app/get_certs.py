@@ -21,7 +21,6 @@ import requests
 
 proxies = get_proxies()
 
-
 # Get the cert ids from domain name. To be modified.
 def get_cert_by_domain_name(domain):
     logger.debug('Entered :: get_cert_by_domain_name')
@@ -211,7 +210,8 @@ def get_domains_from_cert_ids(cert_ref_id):
 def fetch_url(url):
     logger.debug('Entered fetch_url')
     proxy_index = random.randint(0, len(proxies) - 1)
-    proxy = {'http': proxies[proxy_index], 'https': proxies[proxy_index]}
+    # proxy = {'http': proxies[proxy_index], 'https': proxies[proxy_index]}
+    proxy = {'https': proxies[proxy_index]}
     logger.debug('Selected proxy {}\n'.format(proxy))
     try:
         user_agent = random.choice(Config.USER_AGENT_LIST)
@@ -225,9 +225,9 @@ def fetch_url(url):
         response = requests.get(url=url, headers=headers, proxies=proxy)
         logger.debug('request header {}'.format(response.request.headers))
         logger.debug('User agent used is {}\n'.format(user_agent))
-        return url, response.content, None
+        return url, response.content, None, proxy
     except Exception as e:
-        return url, None, e
+        return url, None, e, proxy
 
 
 def get_response_from_crtsh_urls(crtsh_url_list):
@@ -236,12 +236,12 @@ def get_response_from_crtsh_urls(crtsh_url_list):
     crtsh_response_list = []
     start_time = timer()
     results = ThreadPool(Config.THREAD_COUNT).imap_unordered(fetch_url, crtsh_url_list)
-    for url, html, error in results:
+    for url, html, error, proxy in results:
         if error is None:
-            logger.info("%r fetched in %ss" % (url, timer() - start_time))
+            logger.info("%r fetched in %ss -- proxy used: %s" % (url, timer() - start_time, proxy))
             crtsh_response_list.append(html)
         else:
-            logger.info("error fetching %r: %s" % (url, error))
+            logger.info("error fetching %r: %s : proxy used %s" % (url, error, proxy))
     logger.info("Elapsed Time: %s" % (timer() - start_time))
     # logger.info('Starting threading at {}'.format(start_time))
     # with ThreadPoolExecutor(Config.THREAD_COUNT) as executor:

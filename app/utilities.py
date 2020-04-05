@@ -11,18 +11,20 @@ from lxml.html import fromstring
 
 
 def get_proxies():
-    url = 'https://free-proxy-list.net/'
+    # url = 'https://free-proxy-list.net/'
+    url = 'https://sslproxies.org/'
     response = requests.get(url)
     parser = fromstring(response.text)
     logger.debug('Response from free-proxy \n{}'.format(response.text))
     proxies = []
-    for i in parser.xpath('//tbody/tr')[:10]:
+    for i in parser.xpath('//tbody/tr')[:50]:
         # if i.xpath('.//td[7][contains(text(), "yes")]') and i.xpath('.//td[5][contains(text(), "elite proxy")]'):
-        if i.xpath('.//td[7][contains(text(), "yes")]'):
+        if i.xpath('.//td[5][contains(text(), "elite proxy")]'):
             proxy = ":".join([i.xpath('.//td[1]/text()')[0], i.xpath('.//td[2]/text()')[0]])
             logger.debug('proxy : {}'.format(proxy))
             proxies.append(proxy)
-    logger.debug('List of proxies {}\n'.format(proxies))
+    logger.info('List of proxies {}\n'.format(proxies))
+    logger.info('No of proxies {}\n'.format(len(proxies)))
     return proxies
 
 
