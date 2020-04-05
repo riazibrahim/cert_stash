@@ -21,7 +21,7 @@ class Config:
     CERTSH_API_REQUEST_ID_URL = os.environ.get('CERTSH_API_REQUEST_ID_URL') or 'https://crt.sh/?id={}&output={}'
 
     # Multiprocessing
-    MAX_THREAD_COUNT = 15
+    MAX_THREAD_COUNT = 10
     USER_AGENT_LIST = [
         "Mozilla/5.0 (Macintosh; U; PPC Mac OS X; fi-fi) AppleWebKit/420+ (KHTML, like Gecko) Safari/419.3",
         "Mozilla/5.0 (Macintosh; U; PPC Mac OS X; de-de) AppleWebKit/125.2 (KHTML, like Gecko) Safari/125.7",

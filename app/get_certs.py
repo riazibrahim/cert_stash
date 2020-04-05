@@ -18,6 +18,8 @@ from time import time as timer
 import random
 from multiprocessing.pool import ThreadPool
 import requests
+from threading import current_thread
+import time
 
 
 # proxies = get_proxies()
@@ -178,15 +180,15 @@ def get_cert_ids_by_org(org_name):
 
 
 # Extract the domain names by scraping the crt.sh page for each cert id
-def get_domains_from_cert_ids(cert_ref_id):
+def get_domains_from_cert_ids(cert_ref_id, html):
     logger.debug('Entered :: get_domains_from_cert_ids')
     logger.debug('Getting domains from the certificate "{}"'.format(cert_ref_id))
-    baseurl = Config.CERTSH_API_REQUEST_ID_URL
-    id = str(cert_ref_id).strip()
-    output_format = 'html'  # Hard coded
-    curr_cert_url = baseurl.format(id, output_format)
-    response = requests.get(curr_cert_url)
-    soup = BeautifulSoup(response.content, 'lxml')
+    # baseurl = Config.CERTSH_API_REQUEST_ID_URL
+    # id = str(cert_ref_id).strip()
+    # output_format = 'html'  # Hard coded
+    # curr_cert_url = baseurl.format(id, output_format)
+    # response = requests.get(curr_cert_url)
+    soup = BeautifulSoup(html.content, 'lxml')
     # items = soup.find_all(text=reg.compile('DNS:[A-Za-z0-9]*[.][a-zA-Z0-9]*'))
     domain_list = []
     # obtain all entries starting with DNS: xx.com
@@ -226,26 +228,31 @@ def get_domains_from_cert_ids(cert_ref_id):
 
 def fetch_url_tor(url):
     logger.debug('Entered fetch_url_tor')
+    # logger.debug('Current thread {}'.format(current_thread().name))
     session = get_tor_session()
     ip = session.get("http://icanhazip.com").text
-    logger.debug('Obtained tor ip {}\n'.format(ip))
+    logger.debug('Thread name: {} obtained tor ip {}\n'.format(current_thread().name, ip))
     try:
         user_agent = random.choice(Config.USER_AGENT_LIST)
         headers = {'User-Agent': user_agent}
         response = session.get(url=url, headers=headers)
         logger.debug('request header {}'.format(response.request.headers))
         logger.debug('User agent used is {}\n'.format(user_agent))
-        renew_tor_connection()
+        logger.debug('Thread {}  going to sleep for 5 seconds'.format(current_thread().name))
+        time.sleep(5)
+        renew_tor_connection(ip=ip)
         return url, response.content, None, ip
     except Exception as e:
-        renew_tor_connection()
+        logger.debug('Thread {}  going to sleep for 5 seconds'.format(current_thread().name))
+        time.sleep(5)
+        renew_tor_connection(ip=ip)
         return url, None, e, ip
 
 
 def get_response_from_crtsh_urls(crtsh_url_list):
     logger.info('Entered "get_response_via_crtsh_id"\n')
     logger.info('The list of URLs for threading is :{}\n'.format(crtsh_url_list))
-    crtsh_response_list = []
+    crtsh_response_dict = {}
     start_time = timer()
     threads_count = int(len(crtsh_url_list) / 2) if int(len(crtsh_url_list) / 2) < Config.MAX_THREAD_COUNT else Config.MAX_THREAD_COUNT
     chunk_size = int(len(crtsh_url_list) / threads_count)
@@ -253,15 +260,19 @@ def get_response_from_crtsh_urls(crtsh_url_list):
     results = ThreadPool(threads_count).imap(fetch_url_tor, crtsh_url_list, chunksize=chunk_size)
     for url, html, error, ip in results:
         if error is None:
-            logger.info("%r fetched in %ss -- ip used: %s" % (url, timer() - start_time, ip))
-            crtsh_response_list.append(html)
+            logger.debug("%r fetched in %ss -- ip used: %s" % (url, timer() - start_time, ip))
+            id = url.split('=')[1].split('&')[0]
+            crtsh_response_dict.update({id: html})
         else:
             logger.info("error fetching %r: %s : ip used %s" % (url, error, ip))
     logger.info("Elapsed Time: %s" % (timer() - start_time))
-    logger.info('Number of responses: {}\n'.format(len(crtsh_response_list)))
+    logger.info('Number of responses: {}\n'.format(len(crtsh_response_dict)))
+    logger.debug('Response dictionary: \n{}'.format(crtsh_response_dict))
     logger.info(
-        'Total time taken for {} threads and chunksize {} is {} minutes \n'.format(threads_count, chunk_size, (timer() - start_time) / 60))
-    logger.info('Exited "get_response_via_crtsh_id"\n')
+        'Total time taken for {} threads and chunksize {} is {} minutes \n'.format(threads_count, chunk_size,
+                                                                                   (timer() - start_time) / 60))
+    logger.info('Exiting "get_response_via_crtsh_id"\n')
+    return crtsh_response_dict
 
 
 def parse_domains_and_update_certsmasterdb(certs_ref_df, org_name):
@@ -302,11 +313,13 @@ def parse_domains_and_update_certsmasterdb(certs_ref_df, org_name):
         crtsh_url_list.append(Config.CERTSH_API_REQUEST_ID_URL.format(str(crt_id).strip(), 'html'))
 
     # logger.info('The URL list is: {}\n'.format(crtsh_url_list))
-    get_response_from_crtsh_urls(crtsh_url_list)
+    crtsh_response_dict = get_response_from_crtsh_urls(crtsh_url_list)
 
-    sys.exit('Temporary Exit!!!!!')
     for index, row in certs_ref_df.iterrows():
         crtsh_id = row['crtsh_id']
+        html = crtsh_response_dict.get(str(crtsh_id))
+        logger.info('Value for key {} is\n {}'.format(crtsh_id,html))
+        sys.exit('Temp exit!!!!!')
         logger.info('{}. Getting domains from the certificate "{}"'.format(count, crtsh_id))
         # TODO: Threading of these calls
         domains = get_domains_from_cert_ids(crtsh_id)  # Returns list of domains from the certsh html pages

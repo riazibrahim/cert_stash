@@ -10,7 +10,7 @@ import requests
 from lxml.html import fromstring
 from stem.control import Controller
 from stem import Signal
-
+from threading import current_thread
 
 def get_tor_session():
     session = requests.Session()
@@ -19,7 +19,8 @@ def get_tor_session():
     return session
 
 
-def renew_tor_connection():
+def renew_tor_connection(ip):
+    logger.debug('Thread {} Resetting IP address {}'.format(current_thread().name, ip))
     with Controller.from_port(port=9051) as c:
         c.authenticate(password="password")
         # send NEWNYM signal to establish a new clean connection through the Tor network
