@@ -2,7 +2,7 @@ import requests
 import json
 from app import engine, logger
 from app.models import CertsMaster, OrgsCertsRefsMaster
-from app.utilities import export_to_excel, check_valid_domain_name
+from app.utilities import export_to_excel, check_valid_domain_name, get_proxies
 from config import Config
 from sqlalchemy.orm import sessionmaker
 import pandas as pd
@@ -18,6 +18,8 @@ from time import time as timer
 import random
 from multiprocessing.pool import ThreadPool
 import requests
+
+proxies = get_proxies()
 
 
 # Get the cert ids from domain name. To be modified.
@@ -207,15 +209,20 @@ def get_domains_from_cert_ids(cert_ref_id):
 
 
 def fetch_url(url):
+    logger.debug('Entered fetch_url')
+    proxy_index = random.randint(0, len(proxies) - 1)
+    proxy = {'http': proxies[proxy_index], 'https': proxies[proxy_index]}
+    logger.debug('Selected proxy {}\n'.format(proxy))
     try:
         user_agent = random.choice(Config.USER_AGENT_LIST)
         headers = {'User-Agent': user_agent}
         # request = urllib.request.Request(url, headers=headers)
-        proxy = random.choice(Config.PROXY_LIST)
+        # proxy = random.choice(Config.PROXY_LIST)
+        # logger.info('Proxy : {}\n'.format(proxy))
         # logger.debug('Proxy used: {}'.format(proxy_ip))
         # request.set_proxy(proxy_ip, 'https')
         # response = requests.get(url=url, headers=headers, proxies={"http": proxy, "https": proxy})
-        response = requests.get(url=url, headers=headers)
+        response = requests.get(url=url, headers=headers, proxies=proxy)
         logger.debug('request header {}'.format(response.request.headers))
         logger.debug('User agent used is {}\n'.format(user_agent))
         return url, response.content, None

@@ -1,5 +1,7 @@
 import os
 import logging
+import requests
+from lxml.html import fromstring
 
 basedir = os.getcwd()
 
@@ -141,6 +143,8 @@ class Config:
     #     '216.98.9.150:3128',
     #     '80.76.40.227:3128'
     # ]
-    PROXY_LIST = [
-        '187.87.38.28:53281',
-    ]
+
+
+    PROXY_LIST = {
+        'https': '187.87.38.28:53281'
+    }

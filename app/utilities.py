@@ -6,6 +6,24 @@ import dns.resolver
 from config import Config
 import sys
 import regex as re
+import requests
+from lxml.html import fromstring
+
+
+def get_proxies():
+    url = 'https://free-proxy-list.net/'
+    response = requests.get(url)
+    parser = fromstring(response.text)
+    logger.debug('Response from free-proxy \n{}'.format(response.text))
+    proxies = []
+    for i in parser.xpath('//tbody/tr')[:10]:
+        # if i.xpath('.//td[7][contains(text(), "yes")]') and i.xpath('.//td[5][contains(text(), "elite proxy")]'):
+        if i.xpath('.//td[7][contains(text(), "yes")]'):
+            proxy = ":".join([i.xpath('.//td[1]/text()')[0], i.xpath('.//td[2]/text()')[0]])
+            logger.debug('proxy : {}'.format(proxy))
+            proxies.append(proxy)
+    logger.debug('List of proxies {}\n'.format(proxies))
+    return proxies
 
 
 # Use pandas to connect to the database given in argument
