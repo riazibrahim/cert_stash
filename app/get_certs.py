@@ -2,7 +2,7 @@ import requests
 import json
 from app import engine, logger
 from app.models import CertsMaster, OrgsCertsRefsMaster
-from app.utilities import export_to_excel, check_valid_domain_name, get_proxies, get_tor_session
+from app.utilities import export_to_excel, check_valid_domain_name, get_proxies, get_tor_session, renew_tor_connection
 from config import Config
 from sqlalchemy.orm import sessionmaker
 import pandas as pd
@@ -234,8 +234,10 @@ def fetch_url_tor(url):
         response = session.get(url=url, headers=headers)
         logger.debug('request header {}'.format(response.request.headers))
         logger.debug('User agent used is {}\n'.format(user_agent))
+        renew_tor_connection()
         return url, response.content, None, ip
     except Exception as e:
+        renew_tor_connection()
         return url, None, e, ip
 
 

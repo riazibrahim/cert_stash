@@ -18,12 +18,12 @@ def get_tor_session():
     session.proxies['https'] = 'socks5h://localhost:9050'
     return session
 
-#
-# def renew_tor_conn():
-#     with Controller.from_port(port=9051) as c:
-#         c.authenticate()
-#         # send NEWNYM signal to establish a new clean connection through the Tor network
-#         c.signal(Signal.NEWNYM)
+
+def renew_tor_connection():
+    with Controller.from_port(port=9051) as c:
+        c.authenticate(password="password")
+        # send NEWNYM signal to establish a new clean connection through the Tor network
+        c.signal(Signal.NEWNYM)
 
 
 def get_proxies():
