@@ -17,6 +17,7 @@ import urllib.request
 from time import time as timer
 import random
 from multiprocessing.pool import ThreadPool
+import requests
 
 
 # Get the cert ids from domain name. To be modified.
@@ -208,10 +209,16 @@ def get_domains_from_cert_ids(cert_ref_id):
 def fetch_url(url):
     try:
         user_agent = random.choice(Config.USER_AGENT_LIST)
-        response = urllib.request.urlopen(
-            urllib.request.Request(url, headers={'User-Agent': user_agent}))
+        headers = {'User-Agent': user_agent}
+        # request = urllib.request.Request(url, headers=headers)
+        proxy = random.choice(Config.PROXY_LIST)
+        # logger.debug('Proxy used: {}'.format(proxy_ip))
+        # request.set_proxy(proxy_ip, 'https')
+        # response = requests.get(url=url, headers=headers, proxies={"http": proxy, "https": proxy})
+        response = requests.get(url=url, headers=headers)
+        logger.debug('request header {}'.format(response.request.headers))
         logger.debug('User agent used is {}\n'.format(user_agent))
-        return url, response.read(), None
+        return url, response.content, None
     except Exception as e:
         return url, None, e
 

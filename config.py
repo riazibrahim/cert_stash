@@ -19,7 +19,7 @@ class Config:
     CERTSH_API_REQUEST_ID_URL = os.environ.get('CERTSH_API_REQUEST_ID_URL') or 'https://crt.sh/?id={}&output={}'
 
     # Multiprocessing
-    THREAD_COUNT = 3
+    THREAD_COUNT = 2
     USER_AGENT_LIST = [
         "Mozilla/5.0 (Macintosh; U; PPC Mac OS X; fi-fi) AppleWebKit/420+ (KHTML, like Gecko) Safari/419.3",
         "Mozilla/5.0 (Macintosh; U; PPC Mac OS X; de-de) AppleWebKit/125.2 (KHTML, like Gecko) Safari/125.7",
@@ -133,4 +133,14 @@ class Config:
         "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36 OPR/26.0.1656.60",
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2376.0 Safari/537.36 OPR/31.0.1857.0",
         "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/45.0.2454.85 Safari/537.36 OPR/32.0.1948.25"
+    ]
+
+    # PROXY_LIST = [
+    #     '187.87.38.28:53281',
+    #     '144.76.214.156:1080',
+    #     '216.98.9.150:3128',
+    #     '80.76.40.227:3128'
+    # ]
+    PROXY_LIST = [
+        '187.87.38.28:53281',
     ]
