@@ -182,13 +182,7 @@ def get_cert_ids_by_org(org_name):
 # Extract the domain names by scraping the crt.sh page for each cert id
 def get_domains_from_cert_ids(html):
     logger.debug('Entered :: get_domains_from_cert_ids')
-    # baseurl = Config.CERTSH_API_REQUEST_ID_URL
-    # id = str(cert_ref_id).strip()
-    # output_format = 'html'  # Hard coded
-    # curr_cert_url = baseurl.format(id, output_format)
-    # response = requests.get(curr_cert_url)
     soup = BeautifulSoup(html, 'lxml')
-    # items = soup.find_all(text=reg.compile('DNS:[A-Za-z0-9]*[.][a-zA-Z0-9]*'))
     domain_list = []
     # obtain all entries starting with DNS: xx.com
     dns_items = soup.find_all(text=reg.compile('DNS[\s]*:[\s]*([^\s]+[.][\S]+){1,}'))
@@ -196,33 +190,13 @@ def get_domains_from_cert_ids(html):
     commonName_items = soup.find_all(text=reg.compile('commonName[\s]*=[\s]([^\s]+[.][\S]+){1,}'))
     for item in dns_items:
         domain = item.split(':')[1]
-        # logger.info('identifed DNS {}'.format(domain))
-        # print('identifed DNS:{}'.format(domain))
         if domain is not None:
             domain_list.append(domain.strip())
     for item in commonName_items:
         domain = item.split('=')[1]
-        # logger.info('identifed commonName {}'.format(domain))
         if domain is not None:
             domain_list.append(domain.strip())
-        # print('identifed commonName:{}'.format(domain))
     return domain_list
-
-
-# def fetch_url(url):
-#     logger.debug('Entered fetch_url')
-#     proxy_index = random.randint(0, len(proxies) - 1)
-#     proxy = {'https': proxies[proxy_index]}
-#     logger.debug('Selected proxy {}\n'.format(proxy))
-#     try:
-#         user_agent = random.choice(Config.USER_AGENT_LIST)
-#         headers = {'User-Agent': user_agent}
-#         response = requests.get(url=url, headers=headers, proxies=proxy)
-#         logger.debug('request header {}'.format(response.request.headers))
-#         logger.debug('User agent used is {}\n'.format(user_agent))
-#         return url, response.content, None, proxy
-#     except Exception as e:
-#         return url, None, e, proxy
 
 
 def fetch_url_tor(url):
@@ -245,14 +219,14 @@ def fetch_url_tor(url):
 
 
 def get_response_from_crtsh_urls(crtsh_url_list):
-    logger.info('Entered "get_response_via_crtsh_id"\n')
-    logger.info('The list of URLs for threading is :{}\n'.format(crtsh_url_list))
+    logger.debug('Entered "get_response_via_crtsh_id"\n')
+    logger.debug('The list of URLs for threading is :{}\n'.format(crtsh_url_list))
     crtsh_response_dict = {}
     start_time = timer()
     threads_count = int(len(crtsh_url_list) / 2) if int(
         len(crtsh_url_list) / 2) < Config.MAX_THREAD_COUNT else Config.MAX_THREAD_COUNT
     chunk_size = int(len(crtsh_url_list) / threads_count)
-    logger.info('Using the following number of threads: {} and chunk size : {}'.format(threads_count, chunk_size))
+    logger.info('Using {} threads and chunks of size {}'.format(threads_count, chunk_size))
     results = ThreadPool(threads_count).imap(fetch_url_tor, crtsh_url_list, chunksize=chunk_size)
     for url, html, error, ip in results:
         if error is None:
@@ -261,13 +235,13 @@ def get_response_from_crtsh_urls(crtsh_url_list):
             crtsh_response_dict.update({id: html})
         else:
             logger.info("error fetching %r: %s : ip used %s" % (url, error, ip))
-    logger.info("Elapsed Time: %s" % (timer() - start_time))
+    logger.debug("Elapsed Time: %s" % (timer() - start_time))
     logger.info('Number of responses: {}\n'.format(len(crtsh_response_dict)))
     logger.debug('Response dictionary: \n{}'.format(crtsh_response_dict))
     logger.info(
         'Total time taken for {} threads and chunksize {} is {} minutes \n'.format(threads_count, chunk_size,
                                                                                    (timer() - start_time) / 60))
-    logger.info('Exiting "get_response_via_crtsh_id"\n')
+    logger.debug('Exiting "get_response_via_crtsh_id"\n')
     return crtsh_response_dict
 
 
@@ -303,7 +277,7 @@ def parse_domains_and_update_certsmasterdb(certs_ref_df, org_name):
     logger.debug('Session to database is established')
 
     crtsh_id_list = certs_ref_df['crtsh_id'].to_list()
-    logger.info('crtsh_ids list is :\n{}'.format(crtsh_id_list))
+    logger.debug('crtsh_ids list is :\n{}'.format(crtsh_id_list))
     crtsh_url_list = []
     for crt_id in crtsh_id_list:
         crtsh_url_list.append(Config.CERTSH_API_REQUEST_ID_URL.format(str(crt_id).strip(), 'html'))
@@ -315,7 +289,7 @@ def parse_domains_and_update_certsmasterdb(certs_ref_df, org_name):
         crtsh_id = row['crtsh_id']
         html = crtsh_response_dict.get(str(crtsh_id))
         logger.debug('Value for key {} is\n {}'.format(crtsh_id, html))
-        logger.info('{}. Getting domains from the certificate "{}"'.format(count, crtsh_id))
+        logger.debug('{}. Getting domains from the certificate "{}"'.format(count, crtsh_id))
         domains = get_domains_from_cert_ids(html)  # Returns list of domains from the certsh html pages
         logger.debug('Domains extracted from {} are {}'.format(crtsh_id, domains))
         if len(domains) > 0:
