@@ -12,6 +12,11 @@ import sys
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from app.globalvars import filename_prepend, input_file, input_phrase, input_domain_flag, input_org_flag, \
     export_all_outfile, export_outfile, process, search_tag, internal_tld_file, external_tld_file, output_type
+# from concurrent.futures import ThreadPoolExecutor, as_completed
+import urllib.request
+from time import time as timer
+import random
+from multiprocessing.pool import ThreadPool
 
 
 # Get the cert ids from domain name. To be modified.
@@ -200,6 +205,50 @@ def get_domains_from_cert_ids(cert_ref_id):
     return domain_list
 
 
+def fetch_url(url):
+    try:
+        user_agent = random.choice(Config.USER_AGENT_LIST)
+        response = urllib.request.urlopen(
+            urllib.request.Request(url, headers={'User-Agent': user_agent}))
+        logger.debug('User agent used is {}\n'.format(user_agent))
+        return url, response.read(), None
+    except Exception as e:
+        return url, None, e
+
+
+def get_response_from_crtsh_urls(crtsh_url_list):
+    logger.info('Entered "get_response_via_crtsh_id"\n')
+    logger.info('The list of URLs for threading is :{}\n'.format(crtsh_url_list))
+    crtsh_response_list = []
+    start_time = timer()
+    results = ThreadPool(Config.THREAD_COUNT).imap_unordered(fetch_url, crtsh_url_list)
+    for url, html, error in results:
+        if error is None:
+            logger.info("%r fetched in %ss" % (url, timer() - start_time))
+            crtsh_response_list.append(html)
+        else:
+            logger.info("error fetching %r: %s" % (url, error))
+    logger.info("Elapsed Time: %s" % (timer() - start_time))
+    # logger.info('Starting threading at {}'.format(start_time))
+    # with ThreadPoolExecutor(Config.THREAD_COUNT) as executor:
+    #     # future_to_url = executor.map(urllib.request.urlopen, crtsh_url_list)
+    #     future_to_url = {executor.submit(urllib.request.urlopen, urllib.request.Request(url, headers={'User-Agent': random.choice(Config.USER_AGENT_LIST)})): url for url in crtsh_url_list}
+    #     for future in as_completed(future_to_url):
+    #         url = future_to_url[future]
+    #         try:
+    #             response = future.result()
+    #             crtsh_response_list.append(future.result())
+    #         except Exception as exc:
+    #             logger.info('%r generated an exception: %s' % (url, exc))
+    #         else:
+    #             # logger.info('%r page is %d bytes' % (url, len(response.content())))
+    #             logger.info('processed %r page' % url)
+    logger.info('Number of responses: {}\n'.format(len(crtsh_response_list)))
+    logger.info(
+        'Total time taken for {} threads is {} minutes \n'.format(Config.THREAD_COUNT, (timer() - start_time) / 60))
+    logger.info('Exited "get_response_via_crtsh_id"\n')
+
+
 def parse_domains_and_update_certsmasterdb(certs_ref_df, org_name):
     logger.debug('Entered :: parse_domains_and_update_certsmasterdb')
     # If Dataframe is empty, exit
@@ -230,6 +279,17 @@ def parse_domains_and_update_certsmasterdb(certs_ref_df, org_name):
     DBSession = sessionmaker(bind=engine)
     session = DBSession()
     logger.debug('Session to database is established')
+
+    crtsh_id_list = certs_ref_df['crtsh_id'].to_list()
+    logger.info('crtsh_ids list is :\n{}'.format(crtsh_id_list))
+    crtsh_url_list = []
+    for crt_id in crtsh_id_list:
+        crtsh_url_list.append(Config.CERTSH_API_REQUEST_ID_URL.format(str(crt_id).strip(), 'html'))
+
+    # logger.info('The URL list is: {}\n'.format(crtsh_url_list))
+    get_response_from_crtsh_urls(crtsh_url_list)
+
+    sys.exit('Temporary Exit!!!!!')
     for index, row in certs_ref_df.iterrows():
         crtsh_id = row['crtsh_id']
         logger.info('{}. Getting domains from the certificate "{}"'.format(count, crtsh_id))
