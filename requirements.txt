@@ -12,6 +12,7 @@ numpy==1.18.1
 openpyxl==3.0.3
 pandas==1.0.1
 pycodestyle==2.5.0
+PySocks==1.7.1
 python-dateutil==2.8.1
 pytz==2019.3
 regex==2020.2.20
@@ -19,5 +20,6 @@ requests==2.22.0
 six==1.14.0
 soupsieve==2.0
 SQLAlchemy==1.3.13
+stem==1.8.0
 urllib3==1.25.8
 whois==0.9.6
