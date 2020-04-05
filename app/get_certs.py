@@ -180,15 +180,14 @@ def get_cert_ids_by_org(org_name):
 
 
 # Extract the domain names by scraping the crt.sh page for each cert id
-def get_domains_from_cert_ids(cert_ref_id, html):
+def get_domains_from_cert_ids(html):
     logger.debug('Entered :: get_domains_from_cert_ids')
-    logger.debug('Getting domains from the certificate "{}"'.format(cert_ref_id))
     # baseurl = Config.CERTSH_API_REQUEST_ID_URL
     # id = str(cert_ref_id).strip()
     # output_format = 'html'  # Hard coded
     # curr_cert_url = baseurl.format(id, output_format)
     # response = requests.get(curr_cert_url)
-    soup = BeautifulSoup(html.content, 'lxml')
+    soup = BeautifulSoup(html, 'lxml')
     # items = soup.find_all(text=reg.compile('DNS:[A-Za-z0-9]*[.][a-zA-Z0-9]*'))
     domain_list = []
     # obtain all entries starting with DNS: xx.com
@@ -250,7 +249,8 @@ def get_response_from_crtsh_urls(crtsh_url_list):
     logger.info('The list of URLs for threading is :{}\n'.format(crtsh_url_list))
     crtsh_response_dict = {}
     start_time = timer()
-    threads_count = int(len(crtsh_url_list) / 2) if int(len(crtsh_url_list) / 2) < Config.MAX_THREAD_COUNT else Config.MAX_THREAD_COUNT
+    threads_count = int(len(crtsh_url_list) / 2) if int(
+        len(crtsh_url_list) / 2) < Config.MAX_THREAD_COUNT else Config.MAX_THREAD_COUNT
     chunk_size = int(len(crtsh_url_list) / threads_count)
     logger.info('Using the following number of threads: {} and chunk size : {}'.format(threads_count, chunk_size))
     results = ThreadPool(threads_count).imap(fetch_url_tor, crtsh_url_list, chunksize=chunk_size)
@@ -314,11 +314,10 @@ def parse_domains_and_update_certsmasterdb(certs_ref_df, org_name):
     for index, row in certs_ref_df.iterrows():
         crtsh_id = row['crtsh_id']
         html = crtsh_response_dict.get(str(crtsh_id))
-        logger.info('Value for key {} is\n {}'.format(crtsh_id,html))
-        sys.exit('Temp exit!!!!!')
+        logger.debug('Value for key {} is\n {}'.format(crtsh_id, html))
         logger.info('{}. Getting domains from the certificate "{}"'.format(count, crtsh_id))
-        # TODO: Threading of these calls
-        domains = get_domains_from_cert_ids(crtsh_id)  # Returns list of domains from the certsh html pages
+        domains = get_domains_from_cert_ids(html)  # Returns list of domains from the certsh html pages
+        logger.debug('Domains extracted from {} are {}'.format(crtsh_id, domains))
         if len(domains) > 0:
             logger.debug('identified {} domains from current cert entry...\n{}'.format(len(domains), domains))
             domains_list.extend(domains)
