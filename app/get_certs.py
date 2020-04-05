@@ -246,6 +246,8 @@ def get_response_from_crtsh_urls(crtsh_url_list):
     logger.info('The list of URLs for threading is :{}\n'.format(crtsh_url_list))
     crtsh_response_list = []
     start_time = timer()
+    Config.THREAD_COUNT = len(crtsh_url_list)
+    logger.info('Using the following number of threads: {}'.format(Config.THREAD_COUNT))
     results = ThreadPool(Config.THREAD_COUNT).imap_unordered(fetch_url_tor, crtsh_url_list)
     for url, html, error, ip in results:
         if error is None:
