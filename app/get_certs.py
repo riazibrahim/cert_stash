@@ -2,7 +2,7 @@ import requests
 import json
 from app import engine, logger
 from app.models import CertsMaster, OrgsCertsRefsMaster
-from app.utilities import export_to_excel, check_valid_domain_name, get_proxies, get_tor_session, renew_tor_connection
+from app.utilities import export_to_excel, check_valid_domain_name, get_tor_session, renew_tor_connection
 from config import Config
 from sqlalchemy.orm import sessionmaker
 import pandas as pd
@@ -19,7 +19,8 @@ import random
 from multiprocessing.pool import ThreadPool
 import requests
 
-proxies = get_proxies()
+
+# proxies = get_proxies()
 
 # Get the cert ids from domain name. To be modified.
 def get_cert_by_domain_name(domain):
@@ -207,20 +208,20 @@ def get_domains_from_cert_ids(cert_ref_id):
     return domain_list
 
 
-def fetch_url(url):
-    logger.debug('Entered fetch_url')
-    proxy_index = random.randint(0, len(proxies) - 1)
-    proxy = {'https': proxies[proxy_index]}
-    logger.debug('Selected proxy {}\n'.format(proxy))
-    try:
-        user_agent = random.choice(Config.USER_AGENT_LIST)
-        headers = {'User-Agent': user_agent}
-        response = requests.get(url=url, headers=headers, proxies=proxy)
-        logger.debug('request header {}'.format(response.request.headers))
-        logger.debug('User agent used is {}\n'.format(user_agent))
-        return url, response.content, None, proxy
-    except Exception as e:
-        return url, None, e, proxy
+# def fetch_url(url):
+#     logger.debug('Entered fetch_url')
+#     proxy_index = random.randint(0, len(proxies) - 1)
+#     proxy = {'https': proxies[proxy_index]}
+#     logger.debug('Selected proxy {}\n'.format(proxy))
+#     try:
+#         user_agent = random.choice(Config.USER_AGENT_LIST)
+#         headers = {'User-Agent': user_agent}
+#         response = requests.get(url=url, headers=headers, proxies=proxy)
+#         logger.debug('request header {}'.format(response.request.headers))
+#         logger.debug('User agent used is {}\n'.format(user_agent))
+#         return url, response.content, None, proxy
+#     except Exception as e:
+#         return url, None, e, proxy
 
 
 def fetch_url_tor(url):
@@ -246,9 +247,10 @@ def get_response_from_crtsh_urls(crtsh_url_list):
     logger.info('The list of URLs for threading is :{}\n'.format(crtsh_url_list))
     crtsh_response_list = []
     start_time = timer()
-    Config.THREAD_COUNT = int(len(crtsh_url_list)/2)
-    logger.info('Using the following number of threads: {}'.format(Config.THREAD_COUNT))
-    results = ThreadPool(Config.THREAD_COUNT).map(fetch_url_tor, crtsh_url_list)
+    threads_count = int(len(crtsh_url_list) / 2) if int(len(crtsh_url_list) / 2) < Config.MAX_THREAD_COUNT else Config.MAX_THREAD_COUNT
+    chunk_size = int(len(crtsh_url_list) / threads_count)
+    logger.info('Using the following number of threads: {} and chunk size : {}'.format(threads_count, chunk_size))
+    results = ThreadPool(threads_count).imap(fetch_url_tor, crtsh_url_list, chunksize=chunk_size)
     for url, html, error, ip in results:
         if error is None:
             logger.info("%r fetched in %ss -- ip used: %s" % (url, timer() - start_time, ip))
@@ -256,23 +258,9 @@ def get_response_from_crtsh_urls(crtsh_url_list):
         else:
             logger.info("error fetching %r: %s : ip used %s" % (url, error, ip))
     logger.info("Elapsed Time: %s" % (timer() - start_time))
-    # logger.info('Starting threading at {}'.format(start_time))
-    # with ThreadPoolExecutor(Config.THREAD_COUNT) as executor:
-    #     # future_to_url = executor.map(urllib.request.urlopen, crtsh_url_list)
-    #     future_to_url = {executor.submit(urllib.request.urlopen, urllib.request.Request(url, headers={'User-Agent': random.choice(Config.USER_AGENT_LIST)})): url for url in crtsh_url_list}
-    #     for future in as_completed(future_to_url):
-    #         url = future_to_url[future]
-    #         try:
-    #             response = future.result()
-    #             crtsh_response_list.append(future.result())
-    #         except Exception as exc:
-    #             logger.info('%r generated an exception: %s' % (url, exc))
-    #         else:
-    #             # logger.info('%r page is %d bytes' % (url, len(response.content())))
-    #             logger.info('processed %r page' % url)
     logger.info('Number of responses: {}\n'.format(len(crtsh_response_list)))
     logger.info(
-        'Total time taken for {} threads is {} minutes \n'.format(Config.THREAD_COUNT, (timer() - start_time) / 60))
+        'Total time taken for {} threads and chunksize {} is {} minutes \n'.format(threads_count, chunk_size, (timer() - start_time) / 60))
     logger.info('Exited "get_response_via_crtsh_id"\n')
 
 
