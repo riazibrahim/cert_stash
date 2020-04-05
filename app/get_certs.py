@@ -238,13 +238,9 @@ def fetch_url_tor(url):
         response = session.get(url=url, headers=headers)
         logger.debug('request header {}'.format(response.request.headers))
         logger.debug('User agent used is {}\n'.format(user_agent))
-        logger.debug('Thread {}  going to sleep for 5 seconds'.format(current_thread().name))
-        time.sleep(5)
         renew_tor_connection(ip=ip)
         return url, response.content, None, ip
     except Exception as e:
-        logger.debug('Thread {}  going to sleep for 5 seconds'.format(current_thread().name))
-        time.sleep(5)
         renew_tor_connection(ip=ip)
         return url, None, e, ip
 

@@ -11,11 +11,14 @@ from lxml.html import fromstring
 from stem.control import Controller
 from stem import Signal
 from threading import current_thread
+import random
+
 
 def get_tor_session():
     session = requests.Session()
-    session.proxies['http'] = 'socks5h://localhost:9050'
-    session.proxies['https'] = 'socks5h://localhost:9050'
+    creds = str(random.randint(10000, 0x7fffffff)) + ":" + "foobar"
+    session.proxies = {'http': 'socks5h://{}@localhost:9050'.format(creds),
+                       'https': 'socks5h://{}@localhost:9050'.format(creds)}
     return session
 
 
