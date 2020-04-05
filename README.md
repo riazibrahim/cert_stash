@@ -33,22 +33,26 @@ Install all the requirements
 pip install -r requirements.txt
 ```
 
-Install and configure TOR for threading
+Install and configure Tor for threading
 
 ```
-1. Install tor on your system 
+1. Install Tor on your system 
 
 2. Setup Password
+
 $ tor --hash-password MyStr0n9P#D
 16:160103B8D7BA7CFA605C9E99E5BB515D9AE71D33B3D01CE0E7747AD0DC
 $ sudo vi /etc/tor/torrc
 HashedControlPassword 16:160103B8D7BA7CFA605C9E99E5BB515D9AE71D33B3D01CE0E7747AD0DC
 
+
 3. Uncomment the below ControlPort line
+
 $ sudo vi /etc/tor/torrc
 ControlPort 9051
 
 4. Restart Tor service
+
 ```
 
 ## Running the tool
