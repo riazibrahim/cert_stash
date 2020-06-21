@@ -104,10 +104,9 @@ logger.addHandler(console_handler)
 
 logger.debug('Collision app has started')
 
-# TODO: Add a check for tor service and print tor requirement if it is not there
 logger.info('Checking if Tor service is running...')
 if os.system('systemctl is-active --quiet tor.service') != 0:
-    logger.error('Tor is not installed! Please read README.md to install and configure Tor.\n\tProceeding to exit...')
+    logger.error('Tor is not running! Please read README.md to install and configure Tor.\n\tProceeding to exit...')
     sys.exit('\tBye!')
 logger.info('Tor service is running. Proceeding...')
 # Signal handler To exit on Ctrl+C
