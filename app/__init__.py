@@ -104,11 +104,14 @@ logger.addHandler(console_handler)
 
 logger.debug('Collision app has started')
 
+# Tor service check
 logger.info('Checking if Tor service is running...')
 if os.system('systemctl is-active --quiet tor.service') != 0:
     logger.error('Tor is not running! Please read README.md to install and configure Tor.\n\tProceeding to exit...')
     sys.exit('\tBye!')
 logger.info('Tor service is running. Proceeding...')
+
+
 # Signal handler To exit on Ctrl+C
 def signal_handler(sig, frame):
     logger.warning('You pressed Cnrtl+C. Proceeding to exit...')
