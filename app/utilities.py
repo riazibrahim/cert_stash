@@ -83,9 +83,9 @@ def export_to_excel(dataframe, outfile, **kwargs):
         try:
             if not os.path.exists('outputs'):
                 os.mkdir('outputs')
-        except:
-            logger.debug('Error creating outputs directory. Please check permissions.')
-            sys.exit('Error creating outputs directory. Please check permissions.')
+        except Exception as e:
+            logger.debug('Error creating outputs directory. Please check permissions. Details \n{}'.format(e))
+            sys.exit('Error creating outputs directory. Please check permissions. Details \n{}'.format(e))
         try:
             filename = 'outputs/{}.xlsx'.format(outfile)
             if os.path.exists(filename):
