@@ -15,10 +15,12 @@ import random
 
 
 def get_tor_session():
+    logger.debug('Entered :: get_tor_session')
     session = requests.Session()
     creds = str(random.randint(10000, 0x7fffffff)) + ":" + "foobar"
     session.proxies = {'http': 'socks5h://{}@localhost:9050'.format(creds),
                        'https': 'socks5h://{}@localhost:9050'.format(creds)}
+    logger.debug('Exiting :: get_tor_session')
     return session
 
 
@@ -103,9 +105,9 @@ def export_to_excel(dataframe, outfile, **kwargs):
                 else:
                     dataframe.to_excel('outputs/{}.xlsx'.format(outfile))
                 logger.info('Generated {}.xlsx in outputs folder\n'.format(outfile))
-        except:
-            logger.debug('Error creating outputs directory. Please check permissions.')
-            sys.exit('Error creating outputs directory. Please check permissions.')
+        except Exception as e:
+            logger.debug('Error creating outputs directory. Please check permissions. details: \n {}'.format(e))
+            sys.exit('Error creating outputs directory. Please check permissions. details: \n {}'.format(e))
 
 
 # Resolved the domains in the dataframe and returns the results in another dataframe

@@ -209,9 +209,12 @@ def fetch_url_tor(url):
         user_agent = random.choice(Config.USER_AGENT_LIST)
         headers = {'User-Agent': user_agent}
         response = session.get(url=url, headers=headers)
+        logger.debug('URL is {}\n'.format(url))
         logger.debug('request header {}'.format(response.request.headers))
         logger.debug('User agent used is {}\n'.format(user_agent))
-        renew_tor_connection(ip=ip)
+        logger.debug('Response obtained is {}\n'.format(response.content))
+        # renew_tor_connection(ip=ip)
+        logger.debug('24 Dec 2020: Bypassing renewal of IP for some issue')
         return url, response.content, None, ip
     except Exception as e:
         renew_tor_connection(ip=ip)
@@ -225,6 +228,7 @@ def get_response_from_crtsh_urls(crtsh_url_list):
     start_time = timer()
     threads_count = int(len(crtsh_url_list) / 2) if int(
         len(crtsh_url_list) / 2) < Config.MAX_THREAD_COUNT else Config.MAX_THREAD_COUNT
+    # threads_count = 80 # added 16 Dec 2020 bypassing thread count logic
     chunk_size = int(len(crtsh_url_list) / threads_count)
     logger.info('Using {} threads and chunks of size {}'.format(threads_count, chunk_size))
     results = ThreadPool(threads_count).imap(fetch_url_tor, crtsh_url_list, chunksize=chunk_size)
