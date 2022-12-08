@@ -1,7 +1,7 @@
 autopep8==1.5.4
 beautifulsoup4==4.9.3
 bs4==0.0.1
-certifi==2020.12.5
+certifi==2022.12.7
 chardet==3.0.4
 dnspython==2.0.0
 et-xmlfile==1.0.1
